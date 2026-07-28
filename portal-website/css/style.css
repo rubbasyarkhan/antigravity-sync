@@ -1,0 +1,160 @@
+/* Portal Website CSS */
+:root {
+  --bg-dark: #090d16;
+  --bg-card: #121824;
+  --border-color: #212938;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent-green: #22c55e;
+  --accent-green-hover: #16a34a;
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  padding: 24px 48px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-badge {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--accent-green);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #4ade80 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-sub {
+  font-size: 18px;
+  color: var(--text-muted);
+  max-width: 680px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+.download-cta {
+  margin-bottom: 32px;
+}
+
+.btn-download {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #ffffff;
+  text-decoration: none;
+  padding: 16px 36px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(34, 197, 94, 0.4);
+}
+
+.btn-icon {
+  font-size: 28px;
+}
+
+.btn-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.primary-text {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sub-text {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.other-platforms {
+  font-size: 14px;
+  color: var(--text-muted);
+
+}
+
+.platform-links {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.platform-links a {
+  color: var(--text-main);
+  text-decoration: none;
+  padding: 6px 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.platform-links a:hover {
+  background-color: var(--border-color);
+}
+
+.footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-color);
+}

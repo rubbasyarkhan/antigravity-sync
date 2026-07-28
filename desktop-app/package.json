@@ -1,0 +1,29 @@
+{
+  "name": "antigravity-sync",
+  "version": "1.0.0",
+  "description": "Antigravity Sync Desktop Application — one login, everything synced",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "keytar": "^7.9.0",
+    "node-fetch": "^2.7.0",
+    "simple-git": "^3.25.0",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-dmg": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "electron": "^31.0.0"
+  },
+  "config": {
+    "forge": "./forge.config.js"
+  }
+}
