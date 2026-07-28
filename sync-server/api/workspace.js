@@ -13,9 +13,9 @@ router.get('/', requireAuth, async (req, res) => {
   const { github_login } = req.user;
 
   try {
-    // 1. Fetch user's GitHub access token from database
+    // 1. Fetch user's GitHub access token from database (case-insensitive search)
     const [userRow] = await sql`
-      SELECT access_token FROM users WHERE github_login = ${github_login}
+      SELECT access_token FROM users WHERE LOWER(github_login) = LOWER(${github_login})
     `;
 
     let ghAssignedProjects = [];
@@ -35,7 +35,10 @@ router.get('/', requireAuth, async (req, res) => {
           const repos = await ghRes.json();
 
           repos.forEach((repo) => {
-            const isOrg = repo.owner && (repo.owner.type === 'Organization' || repo.owner.login !== github_login);
+            const isOrg = repo.owner && (
+              repo.owner.type === 'Organization' ||
+              repo.owner.login.toLowerCase() !== github_login.toLowerCase()
+            );
 
             if (isOrg) {
               ghAssignedProjects.push({
@@ -64,13 +67,13 @@ router.get('/', requireAuth, async (req, res) => {
       SELECT p.slug, p.name, p.description, p.repo_url, p.team
       FROM projects p
       INNER JOIN assignments a ON a.project_slug = p.slug
-      WHERE a.github_login = ${github_login}
+      WHERE LOWER(a.github_login) = LOWER(${github_login})
       ORDER BY p.team, p.name
     `;
 
     // Merge database assignments avoiding duplicates
     dbAssigned.forEach((dbProj) => {
-      if (!ghAssignedProjects.some((p) => p.slug === dbProj.slug)) {
+      if (!ghAssignedProjects.some((p) => p.slug.toLowerCase() === dbProj.slug.toLowerCase())) {
         ghAssignedProjects.push(dbProj);
       }
     });
@@ -79,7 +82,7 @@ router.get('/', requireAuth, async (req, res) => {
     const [workspace] = await sql`
       SELECT enabled_slugs, personal_repos
       FROM user_workspace
-      WHERE github_login = ${github_login}
+      WHERE LOWER(github_login) = LOWER(${github_login})
     `;
 
     const savedPersonalRepos = workspace?.personal_repos || [];
@@ -93,7 +96,7 @@ router.get('/', requireAuth, async (req, res) => {
     const invites = await sql`
       SELECT id, from_login, project_slug, repo_url, created_at
       FROM invites
-      WHERE to_login = ${github_login} AND status = 'pending'
+      WHERE LOWER(to_login) = LOWER(${github_login}) AND status = 'pending'
       ORDER BY created_at DESC
     `;
 
