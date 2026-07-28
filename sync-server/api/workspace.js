@@ -1,8 +1,9 @@
 /**
- * GET /workspace - Fetch assigned projects, saved toggles, personal projects & invites
+ * GET /workspace - Fetch assigned company projects, GitHub organization repos, personal repos, toggles & invites
  * POST /workspace - Save toggled projects and personal project manifests across devices
  */
 const { Router } = require('express');
+const fetch = require('node-fetch');
 const { requireAuth } = require('../middleware/auth');
 const { sql } = require('../lib/db');
 
@@ -12,8 +13,54 @@ router.get('/', requireAuth, async (req, res) => {
   const { github_login } = req.user;
 
   try {
-    // 1. Fetch assigned company projects for this GitHub username
-    const assigned = await sql`
+    // 1. Fetch user's GitHub access token from database
+    const [userRow] = await sql`
+      SELECT access_token FROM users WHERE github_login = ${github_login}
+    `;
+
+    let ghAssignedProjects = [];
+    let ghPersonalProjects = [];
+
+    // 2. Fetch live repositories directly from GitHub API using the user's OAuth access token
+    if (userRow && userRow.access_token) {
+      try {
+        const ghRes = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated&type=all', {
+          headers: {
+            Authorization: `Bearer ${userRow.access_token}`,
+            'User-Agent': 'Antigravity-Sync-Server',
+          },
+        });
+
+        if (ghRes.ok) {
+          const repos = await ghRes.json();
+
+          repos.forEach((repo) => {
+            const isOrg = repo.owner && (repo.owner.type === 'Organization' || repo.owner.login !== github_login);
+
+            if (isOrg) {
+              ghAssignedProjects.push({
+                slug: repo.name,
+                name: repo.name,
+                description: repo.description || `Repository from ${repo.owner.login}`,
+                repo_url: repo.clone_url || repo.html_url,
+                team: repo.owner.login,
+              });
+            } else {
+              ghPersonalProjects.push({
+                slug: repo.name,
+                name: repo.name,
+                repo_url: repo.clone_url || repo.html_url,
+              });
+            }
+          });
+        }
+      } catch (ghErr) {
+        console.warn('Could not fetch GitHub repos dynamically:', ghErr.message);
+      }
+    }
+
+    // 3. Fetch explicit database assignments (if any)
+    const dbAssigned = await sql`
       SELECT p.slug, p.name, p.description, p.repo_url, p.team
       FROM projects p
       INNER JOIN assignments a ON a.project_slug = p.slug
@@ -21,14 +68,28 @@ router.get('/', requireAuth, async (req, res) => {
       ORDER BY p.team, p.name
     `;
 
-    // 2. Fetch saved workspace state for multi-device sync
+    // Merge database assignments avoiding duplicates
+    dbAssigned.forEach((dbProj) => {
+      if (!ghAssignedProjects.some((p) => p.slug === dbProj.slug)) {
+        ghAssignedProjects.push(dbProj);
+      }
+    });
+
+    // 4. Fetch saved workspace state for multi-device sync
     const [workspace] = await sql`
       SELECT enabled_slugs, personal_repos
       FROM user_workspace
       WHERE github_login = ${github_login}
     `;
 
-    // 3. Fetch pending invites sent to this user
+    const savedPersonalRepos = workspace?.personal_repos || [];
+    savedPersonalRepos.forEach((savedRepo) => {
+      if (!ghPersonalProjects.some((p) => p.slug === savedRepo.slug || p.repo_url === savedRepo.repo_url)) {
+        ghPersonalProjects.push(savedRepo);
+      }
+    });
+
+    // 5. Fetch pending invites sent to this user
     const invites = await sql`
       SELECT id, from_login, project_slug, repo_url, created_at
       FROM invites
@@ -38,9 +99,9 @@ router.get('/', requireAuth, async (req, res) => {
 
     res.json({
       github_login,
-      assigned_projects: assigned,
+      assigned_projects: ghAssignedProjects,
       enabled_slugs: workspace?.enabled_slugs || [],
-      personal_repos: workspace?.personal_repos || [],
+      personal_repos: ghPersonalProjects,
       pending_invites: invites,
     });
   } catch (err) {
