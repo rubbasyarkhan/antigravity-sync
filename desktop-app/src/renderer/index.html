@@ -96,8 +96,13 @@
           <div id="personal-projects-list" class="project-list">
             <div class="empty-state">No personal projects yet.</div>
           </div>
-          <button id="btn-add-personal" class="btn-ghost">+ Add Personal Project</button>
+          <button id="btn-add-personal" class="btn-ghost">+ Add Custom Personal Project</button>
         </section>
+
+        <!-- Main Machine Setup Trigger -->
+        <button id="btn-setup-machine-main" class="btn-primary" style="margin-top: 24px; padding: 14px 24px; font-size: 16px; width: 100%;">
+          🚀 Set Up My Machine (Provision Projects to Documents/Projects/)
+        </button>
       </div>
 
       <!-- Notifications Tab -->
@@ -140,8 +145,8 @@
           </div>
           <div class="setting-row">
             <div>
-              <strong>Projects Folder</strong>
-              <p id="settings-projects-path">~/Projects/</p>
+              <strong>Projects Folder Target</strong>
+              <p id="settings-projects-path">Documents/Projects/</p>
             </div>
             <button class="btn-ghost" id="btn-open-folder">Open Folder</button>
           </div>
@@ -163,6 +168,29 @@
         <button id="btn-share-cancel" class="btn-ghost">Cancel</button>
         <button id="btn-share-send" class="btn-primary">Send Invite</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Progress Overlay Modal -->
+  <div id="modal-progress" class="modal hidden">
+    <div class="modal-content" style="width: 480px; text-align: center;">
+      <h3 id="progress-title" style="color: #ffffff; font-size: 18px; margin-bottom: 8px;">🚀 Setting Up Your Machine...</h3>
+      <p id="progress-subtitle" style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Provisioning selected projects into Documents/Projects/</p>
+
+      <!-- Progress Track Bar -->
+      <div style="background-color: var(--bg-dark); border-radius: 10px; height: 10px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--border-color);">
+        <div id="progress-bar-fill" style="background: linear-gradient(90deg, #22c55e 0%, #3b82f6 100%); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+      </div>
+
+      <div id="progress-step-text" style="font-size: 13px; font-weight: 600; color: var(--accent-blue); margin-bottom: 16px;">Initializing...</div>
+
+      <!-- Detailed Results Log List -->
+      <div id="progress-log-list" style="background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; max-height: 140px; overflow-y: auto; text-align: left; font-size: 12px; font-family: monospace; margin-bottom: 20px;">
+      </div>
+
+      <button id="btn-progress-close" class="btn-primary hidden" style="width: 100%;">
+        ✅ Done — Open Projects Folder
+      </button>
     </div>
   </div>
 

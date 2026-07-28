@@ -29,8 +29,8 @@ router.get('/', requireAuth, async (req, res) => {
       };
 
       try {
-        // 2a. Fetch user's direct repos (personal + assigned/collaborator)
-        const ghRes = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated&type=all', { headers });
+        // 2a. Fetch ALL repositories (owner, collaborator, organization member)
+        const ghRes = await fetch('https://api.github.com/user/repos?affiliation=owner,collaborator,organization_member&per_page=100&sort=updated', { headers });
 
         if (ghRes.ok) {
           const repos = await ghRes.json();
@@ -59,7 +59,7 @@ router.get('/', requireAuth, async (req, res) => {
           });
         }
 
-        // 2b. Fetch ALL Organizations the user is a member of / has access to
+        // 2b. Fetch ALL Organizations the user belongs to
         const orgsRes = await fetch('https://api.github.com/user/orgs?per_page=100', { headers });
         if (orgsRes.ok) {
           const orgs = await orgsRes.json();

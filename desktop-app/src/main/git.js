@@ -1,14 +1,14 @@
 /**
- * Git engine module — executes repository cloning and pulling into ~/Projects/
+ * Git engine module — executes repository cloning and pulling into Documents/Projects/
  */
 const simpleGit = require('simple-git');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-const PROJECTS_DIR = path.join(os.homedir(), 'Projects');
+const PROJECTS_DIR = path.join(os.homedir(), 'Documents', 'Projects');
 
-// Ensure ~/Projects/ root directory exists
+// Ensure Documents/Projects/ root directory exists
 if (!fs.existsSync(PROJECTS_DIR)) {
   fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 }
@@ -21,27 +21,30 @@ if (!fs.existsSync(PROJECTS_DIR)) {
 async function cloneProjects(projects, onProgress = () => {}) {
   const results = [];
 
-  for (const project of projects) {
+  for (let i = 0; i < projects.length; i++) {
+    const project = projects[i];
     const targetDir = path.join(PROJECTS_DIR, project.name);
 
     try {
       if (fs.existsSync(path.join(targetDir, '.git'))) {
-        onProgress(project.name, 'pulling');
+        // Project already exists in Documents/Projects/<Project Name>/
+        onProgress(project.name, 'pulling', i + 1, projects.length);
         const git = simpleGit(targetDir);
         await git.pull();
-        results.push({ name: project.name, status: 'pulled', path: targetDir });
-        onProgress(project.name, 'done');
+        results.push({ name: project.name, status: 'pulled', path: targetDir, message: 'Updated existing project in Documents/Projects/' });
+        onProgress(project.name, 'done', i + 1, projects.length);
       } else {
-        onProgress(project.name, 'cloning');
+        // Fresh clone
+        onProgress(project.name, 'cloning', i + 1, projects.length);
         fs.mkdirSync(targetDir, { recursive: true });
         await simpleGit().clone(project.repo_url, targetDir);
-        results.push({ name: project.name, status: 'cloned', path: targetDir });
-        onProgress(project.name, 'done');
+        results.push({ name: project.name, status: 'cloned', path: targetDir, message: 'Initialized new project in Documents/Projects/' });
+        onProgress(project.name, 'done', i + 1, projects.length);
       }
     } catch (err) {
       console.error(`Git engine error on project ${project.name}:`, err.message);
-      results.push({ name: project.name, status: 'error', error: err.message });
-      onProgress(project.name, 'error');
+      results.push({ name: project.name, status: 'error', error: err.message, path: targetDir });
+      onProgress(project.name, 'error', i + 1, projects.length);
     }
   }
 
@@ -49,7 +52,7 @@ async function cloneProjects(projects, onProgress = () => {}) {
 }
 
 /**
- * Run git fetch on all cloned projects inside ~/Projects/
+ * Run git fetch on all cloned projects inside Documents/Projects/
  */
 async function fetchAllProjects() {
   if (!fs.existsSync(PROJECTS_DIR)) return [];

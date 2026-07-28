@@ -22,8 +22,9 @@ function ensureDirectories() {
 /**
  * Provisions global & project-level Antigravity configs
  * @param {Object} workspaceData
+ * @param {Array} activeProjects
  */
-function writeAntigravityConfig(workspaceData = {}) {
+function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
   ensureDirectories();
 
   // 1. Write AGENTS.md global standards rule file
@@ -52,22 +53,17 @@ function writeAntigravityConfig(workspaceData = {}) {
   fs.writeFileSync(path.join(CONFIG_DIR, 'mcp_config.json'), JSON.stringify(mcpConfig, null, 2), 'utf-8');
 
   // 3. Register active project manifests in ~/.gemini/config/projects/
-  const assignedProjects = workspaceData.assigned_projects || [];
-  const enabledSlugs = workspaceData.enabled_slugs || [];
-
-  assignedProjects.forEach((proj) => {
-    if (enabledSlugs.length === 0 || enabledSlugs.includes(proj.slug)) {
-      const manifestPath = path.join(PROJECTS_DIR_MANIFESTS, `${proj.slug}.json`);
-      const manifest = {
-        name: proj.name,
-        slug: proj.slug,
-        path: path.join(os.homedir(), 'Projects', proj.name),
-        repo_url: proj.repo_url,
-        team: proj.team,
-        updated_at: new Date().toISOString()
-      };
-      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
-    }
+  activeProjects.forEach((proj) => {
+    const manifestPath = path.join(PROJECTS_DIR_MANIFESTS, `${proj.slug || proj.name}.json`);
+    const manifest = {
+      name: proj.name,
+      slug: proj.slug || proj.name,
+      path: path.join(os.homedir(), 'Documents', 'Projects', proj.name),
+      repo_url: proj.repo_url,
+      team: proj.team || 'Personal',
+      updated_at: new Date().toISOString()
+    };
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
   });
 
   return { success: true, configDir: CONFIG_DIR };
