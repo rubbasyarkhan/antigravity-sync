@@ -1,18 +1,50 @@
 /**
- * Dashboard & Project List Rendering Engine
+ * Dashboard & Project List Rendering Engine with Real-Time Search Filtering
  */
+let searchQuery = '';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('project-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      renderProjects();
+    });
+  }
+});
+
 function renderProjects() {
   const companyContainer = document.getElementById('company-projects-list');
   const personalContainer = document.getElementById('personal-projects-list');
 
   if (!state.workspace) return;
 
-  const assigned = state.workspace.assigned_projects || [];
-  const personal = state.workspace.personal_repos || [];
+  let assigned = state.workspace.assigned_projects || [];
+  let personal = state.workspace.personal_repos || [];
+
+  // Filter projects based on real-time search query
+  if (searchQuery) {
+    assigned = assigned.filter(
+      (p) =>
+        (p.name && p.name.toLowerCase().includes(searchQuery)) ||
+        (p.description && p.description.toLowerCase().includes(searchQuery)) ||
+        (p.team && p.team.toLowerCase().includes(searchQuery))
+    );
+
+    personal = personal.filter(
+      (p) =>
+        (p.name && p.name.toLowerCase().includes(searchQuery)) ||
+        (p.repo_url && p.repo_url.toLowerCase().includes(searchQuery))
+    );
+  }
 
   // 1. Render Company Assigned Projects
   if (assigned.length === 0) {
-    companyContainer.innerHTML = `<div class="empty-state">No company projects assigned to @${state.user.github_login} yet.</div>`;
+    companyContainer.innerHTML = `<div class="empty-state">${
+      searchQuery
+        ? `No company projects match "${escapeHtml(searchQuery)}".`
+        : `No company projects assigned to @${state.user.github_login} yet.`
+    }</div>`;
   } else {
     companyContainer.innerHTML = assigned
       .map((proj) => {
@@ -42,7 +74,11 @@ function renderProjects() {
 
   // 2. Render Personal Projects
   if (personal.length === 0) {
-    personalContainer.innerHTML = `<div class="empty-state">No personal projects added.</div>`;
+    personalContainer.innerHTML = `<div class="empty-state">${
+      searchQuery
+        ? `No personal projects match "${escapeHtml(searchQuery)}".`
+        : 'No personal projects added.'
+    }</div>`;
   } else {
     personalContainer.innerHTML = personal
       .map(

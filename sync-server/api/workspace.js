@@ -23,13 +23,14 @@ router.get('/', requireAuth, async (req, res) => {
 
     // 2. Fetch live repositories directly from GitHub API using the user's OAuth access token
     if (userRow && userRow.access_token) {
+      const headers = {
+        Authorization: `Bearer ${userRow.access_token}`,
+        'User-Agent': 'Antigravity-Sync-Server',
+      };
+
       try {
-        const ghRes = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated&type=all', {
-          headers: {
-            Authorization: `Bearer ${userRow.access_token}`,
-            'User-Agent': 'Antigravity-Sync-Server',
-          },
-        });
+        // 2a. Fetch user's direct repos (personal + assigned/collaborator)
+        const ghRes = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated&type=all', { headers });
 
         if (ghRes.ok) {
           const repos = await ghRes.json();
@@ -56,6 +57,34 @@ router.get('/', requireAuth, async (req, res) => {
               });
             }
           });
+        }
+
+        // 2b. Fetch ALL Organizations the user is a member of / has access to
+        const orgsRes = await fetch('https://api.github.com/user/orgs?per_page=100', { headers });
+        if (orgsRes.ok) {
+          const orgs = await orgsRes.json();
+
+          for (const org of orgs) {
+            try {
+              const orgReposRes = await fetch(`https://api.github.com/orgs/${org.login}/repos?per_page=100&sort=updated`, { headers });
+              if (orgReposRes.ok) {
+                const orgRepos = await orgReposRes.json();
+                orgRepos.forEach((repo) => {
+                  if (!ghAssignedProjects.some((p) => p.slug.toLowerCase() === repo.name.toLowerCase() || p.repo_url === (repo.clone_url || repo.html_url))) {
+                    ghAssignedProjects.push({
+                      slug: repo.name,
+                      name: repo.name,
+                      description: repo.description || `Organization repository from ${org.login}`,
+                      repo_url: repo.clone_url || repo.html_url,
+                      team: org.login,
+                    });
+                  }
+                });
+              }
+            } catch (orgRepoErr) {
+              console.warn(`Could not fetch repos for org ${org.login}:`, orgRepoErr.message);
+            }
+          }
         }
       } catch (ghErr) {
         console.warn('Could not fetch GitHub repos dynamically:', ghErr.message);
