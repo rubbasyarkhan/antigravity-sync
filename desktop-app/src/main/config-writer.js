@@ -37,68 +37,14 @@ function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
 
   fs.writeFileSync(path.join(CONFIG_DIR, 'AGENTS.md'), baseRuleContent, 'utf-8');
 
-  // 2. Write company-mcp-server.js (valid JSON-RPC stdio MCP server)
-  const mcpServerScriptPath = path.join(CONFIG_DIR, 'company-mcp-server.js');
-  const mcpServerCode = `/**
- * Company Backend MCP Stdio Server — Antigravity Integration
- */
-const readline = require('readline');
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  terminal: false
-});
-
-rl.on('line', (line) => {
-  if (!line.trim()) return;
-  try {
-    const msg = JSON.parse(line);
-    if (msg.method === 'initialize') {
-      console.log(JSON.stringify({
-        jsonrpc: '2.0',
-        id: msg.id,
-        result: {
-          protocolVersion: '2024-11-05',
-          capabilities: { tools: {} },
-          serverInfo: { name: 'company-backend', version: '1.0.0' }
-        }
-      }));
-    } else if (msg.method === 'tools/list') {
-      console.log(JSON.stringify({
-        jsonrpc: '2.0',
-        id: msg.id,
-        result: { tools: [] }
-      }));
-    } else if (msg.id !== undefined) {
-      console.log(JSON.stringify({
-        jsonrpc: '2.0',
-        id: msg.id,
-        result: {}
-      }));
-    }
-  } catch (e) {}
-});
-`;
-
-  fs.writeFileSync(mcpServerScriptPath, mcpServerCode, 'utf-8');
-
-  // 3. Write mcp_config.json pointing to the absolute path of company-mcp-server.js
+  // 2. Write clean mcp_config.json
   const mcpConfig = {
-    mcpServers: {
-      "company-backend": {
-        command: "node",
-        args: [mcpServerScriptPath],
-        env: {
-          SYNC_MODE: "active"
-        }
-      }
-    }
+    mcpServers: {}
   };
 
   fs.writeFileSync(path.join(CONFIG_DIR, 'mcp_config.json'), JSON.stringify(mcpConfig, null, 2), 'utf-8');
 
-  // 4. Register active project manifests in ~/.gemini/config/projects/
+  // 3. Register active project manifests in ~/.gemini/config/projects/
   activeProjects.forEach((proj) => {
     const manifestPath = path.join(PROJECTS_DIR_MANIFESTS, `${proj.slug || proj.name}.json`);
     const manifest = {
