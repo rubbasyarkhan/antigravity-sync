@@ -4,8 +4,8 @@
   "description": "Antigravity Sync Desktop Application — one login, everything synced",
   "main": "src/main/index.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev",
+    "start": "electron . --enable-logging",
+    "dev": "electron . --dev --enable-logging",
     "package": "electron-forge package",
     "make": "electron-forge make"
   },

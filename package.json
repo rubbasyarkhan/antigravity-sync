@@ -1,0 +1,11 @@
+{
+  "name": "antigravity-sync-monorepo",
+  "version": "1.0.0",
+  "description": "Antigravity Sync Monorepo — Backend Server + Desktop App + Portal Website",
+  "private": true,
+  "scripts": {
+    "server": "cd sync-server && npm run dev",
+    "desktop": "cd desktop-app && npm start",
+    "start": "node -e \"const { spawn } = require('child_process'); spawn('npm', ['run', 'dev'], { cwd: './sync-server', stdio: 'inherit', shell: true }); setTimeout(() => { spawn('npm', ['start'], { cwd: './desktop-app', stdio: 'inherit', shell: true }); }, 1500);\""
+  }
+}
