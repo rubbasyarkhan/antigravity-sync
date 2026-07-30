@@ -1,7 +1,7 @@
 /**
  * Background Sync Engine module
- * Runs periodic background verification sync every 15 minutes + handles instant "Sync Now" requests.
- * Records detailed sync activity logs with target filepaths, file diffs, and exact sync changes.
+ * Runs periodic background verification sync every 15 minutes + handles instant "Sync Now" & "Setup My Machine" requests.
+ * Records accurate, detailed sync activity logs with exact file diffs and selected project manifests.
  */
 const { BrowserWindow } = require('electron');
 const fetch = require('node-fetch');
@@ -26,8 +26,48 @@ function sendToRenderer(channel, data) {
 }
 
 /**
- * Execute sync and record activity log
- * @param {string} triggerType - 'Manual (Sync Now)' or 'Automatic (15-Min Timer)'
+ * Record a dedicated log entry when user clicks "Set Up My Machine"
+ */
+function addSetupLogEntry(selectedProjects = [], writtenFiles = []) {
+  const configPath = path.join(os.homedir(), '.gemini', 'config');
+  const timestampDisplay = new Date().toLocaleString();
+  const timestampIso = new Date().toISOString();
+
+  const projectNames = selectedProjects.map((p) => p.name).join(', ') || 'No projects';
+
+  const logEntry = {
+    id: Date.now() + Math.random().toString(36).substr(2, 4),
+    timestamp: timestampDisplay,
+    timeIso: timestampIso,
+    triggerType: 'MANUAL (Setup My Machine)',
+    status: 'Success',
+    targetPath: PROJECTS_DIR,
+    configPath: configPath,
+    companyCount: selectedProjects.filter((p) => p.team && p.team !== 'Personal').length,
+    personalCount: selectedProjects.filter((p) => !p.team || p.team === 'Personal').length,
+    inviteCount: 0,
+    summary: `Set up ${selectedProjects.length} selected project(s) [${projectNames}] to ${PROJECTS_DIR}`,
+    syncedFiles: writtenFiles.map((f) => ({
+      path: f.file,
+      name: path.basename(f.file),
+      type: f.type,
+      action: f.action,
+      diff: f.diff || `+ File ${path.basename(f.file)} provisioned into ${configPath}`
+    }))
+  };
+
+  syncLogs.unshift(logEntry);
+  if (syncLogs.length > 50) syncLogs.pop();
+
+  sendToRenderer('sync:completed', {
+    time: logEntry.timeIso,
+    logEntry,
+    logs: syncLogs
+  });
+}
+
+/**
+ * Execute background or manual sync and record activity log
  */
 async function performSync(triggerType = 'Automatic (15-Min Timer)') {
   if (isSyncing || !currentToken) return;
@@ -60,9 +100,13 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
     // 3. Perform lightweight git fetch check across cloned repos
     const gitResults = await fetchAllProjects();
 
-    const companyCount = (workspace.assigned_projects || []).length;
-    const personalCount = (workspace.personal_repos || []).length;
-    const inviteCount = (workspace.pending_invites || []).length;
+    const enabledSlugs = new Set(workspace.enabled_slugs || []);
+    const assignedProjects = workspace.assigned_projects || [];
+    const personalRepos = workspace.personal_repos || [];
+
+    const activeAssigned = assignedProjects.filter((p) => enabledSlugs.has(p.slug));
+    const activePersonal = personalRepos.filter((p) => enabledSlugs.has(p.slug || p.name));
+    const activeProjects = [...activeAssigned, ...activePersonal];
 
     // Build structured file list & diff details for modal inspection
     const syncedFilesList = [
@@ -82,8 +126,7 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
       }
     ];
 
-    const allProjects = [...(workspace.assigned_projects || []), ...(workspace.personal_repos || [])];
-    allProjects.forEach((p) => {
+    activeProjects.forEach((p) => {
       const slug = p.slug || p.name;
       const projectDiskPath = path.join(PROJECTS_DIR, p.name);
       syncedFilesList.push({
@@ -95,6 +138,10 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
       });
     });
 
+    const activeSummary = activeProjects.length > 0
+      ? `Synced ${activeAssigned.length} enabled company & ${activePersonal.length} personal repos [${activeProjects.map(p => p.name).join(', ')}] to ${PROJECTS_DIR}`
+      : `Verified workspace state (${assignedProjects.length} company & ${personalRepos.length} personal repos available)`;
+
     const logEntry = {
       id: Date.now() + Math.random().toString(36).substr(2, 4),
       timestamp: timestampDisplay,
@@ -103,10 +150,10 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
       status: 'Success',
       targetPath: PROJECTS_DIR,
       configPath: configPath,
-      companyCount,
-      personalCount,
-      inviteCount,
-      summary: `Synced ${companyCount} company & ${personalCount} personal repos to ${PROJECTS_DIR}`,
+      companyCount: activeAssigned.length,
+      personalCount: activePersonal.length,
+      inviteCount: (workspace.pending_invites || []).length,
+      summary: activeSummary,
       gitResults,
       syncedFiles: syncedFilesList
     };
@@ -117,7 +164,7 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
 
     sendToRenderer('sync:completed', {
       time: logEntry.timeIso,
-      invite_count: inviteCount,
+      invite_count: logEntry.inviteCount,
       workspace,
       logEntry,
       logs: syncLogs
@@ -145,10 +192,8 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
 
 function startSyncEngine(token) {
   currentToken = token;
-  // Trigger immediate initial sync
   performSync('Automatic (Initial Auth Sync)');
 
-  // Schedule recurring 15-minute sync interval
   if (syncTimer) clearInterval(syncTimer);
   syncTimer = setInterval(() => performSync('Automatic (15-Min Timer)'), SYNC_INTERVAL_MS);
   console.log('🔄 Background sync engine activated (15-minute interval)');
@@ -172,4 +217,4 @@ function getSyncLogs() {
   return syncLogs;
 }
 
-module.exports = { startSyncEngine, stopSyncEngine, syncNow, getSyncLogs };
+module.exports = { startSyncEngine, stopSyncEngine, syncNow, getSyncLogs, addSetupLogEntry };

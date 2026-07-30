@@ -104,14 +104,17 @@ function setupIPC() {
     return await cloneProjects([{ name: projectName, repo_url: repoUrl }]);
   });
 
-  ipcMain.handle('setup:machine', async (_event, { projects, workspaceData }) => {
-    // 1. Clone/Pull selected project repos into ~/Projects/
-    const cloneResults = await cloneProjects(projects);
+  ipcMain.handle('setup:machine', async (_event, projects, workspaceData) => {
+    // Write configs into ~/.gemini/config/
+    const configResult = writeAntigravityConfig(workspaceData, projects);
 
-    // 2. Write configs into ~/.gemini/config/
-    const configResult = writeAntigravityConfig(workspaceData);
+    // Record accurate activity log for Machine Setup
+    const { addSetupLogEntry } = require('./sync');
+    if (configResult && configResult.writtenFiles) {
+      addSetupLogEntry(projects, configResult.writtenFiles);
+    }
 
-    return { cloneResults, configResult };
+    return { configResult };
   });
 
   ipcMain.handle('git:checkLocalExist', async (_event, projectName) => {
