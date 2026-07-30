@@ -1,6 +1,6 @@
 /**
  * Config Writer — Provisions ~/.gemini/config/ rules, skills, plugins, MCP servers, and project manifests
- * Records detailed file-by-file synchronization logs for ~/.gemini/
+ * Registers cloned repositories with Antigravity IDE for instant AI chat conversation readiness.
  */
 const path = require('path');
 const os = require('os');
@@ -63,22 +63,26 @@ function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
     updatedAt: new Date().toISOString()
   });
 
-  // 3. Register active project manifests in ~/.gemini/config/projects/
+  // 3. Register active project manifests in ~/.gemini/config/projects/ for Antigravity IDE auto-detection
   activeProjects.forEach((proj) => {
     const manifestPath = path.join(PROJECTS_DIR_MANIFESTS, `${proj.slug || proj.name}.json`);
+    const projectPath = path.join(os.homedir(), 'Projects', proj.name);
     const manifest = {
       name: proj.name,
       slug: proj.slug || proj.name,
-      path: path.join(os.homedir(), 'Projects', proj.name),
+      path: projectPath,
       repo_url: proj.repo_url,
       team: proj.team || 'Personal',
+      auto_provisioned: true,
+      antigravity_ready: true,
       updated_at: new Date().toISOString()
     };
+
     const manifestStr = JSON.stringify(manifest, null, 2);
     fs.writeFileSync(manifestPath, manifestStr, 'utf-8');
     writtenFiles.push({
       file: manifestPath,
-      type: `Project Manifest (${proj.name})`,
+      type: `Antigravity Project Manifest (${proj.name})`,
       action: 'REGISTERED',
       sizeBytes: Buffer.byteLength(manifestStr, 'utf-8'),
       updatedAt: new Date().toISOString()
