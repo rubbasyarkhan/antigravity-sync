@@ -21,7 +21,7 @@ function ensureDirectories() {
 }
 
 /**
- * Provisions global & project-level Antigravity configs and returns detailed file logs
+ * Provisions global & project-level Antigravity configs and returns detailed file logs & diffs
  * @param {Object} workspaceData
  * @param {Array} activeProjects
  */
@@ -44,6 +44,7 @@ function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
     type: 'Global Rules File (AGENTS.md)',
     action: 'PROVISIONED',
     sizeBytes: Buffer.byteLength(baseRuleContent, 'utf-8'),
+    diff: baseRuleContent.split('\n').map((l) => (l ? `+ ${l}` : '')).join('\n'),
     updatedAt: new Date().toISOString()
   });
 
@@ -60,6 +61,7 @@ function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
     type: 'MCP Server Config (mcp_config.json)',
     action: 'PROVISIONED',
     sizeBytes: Buffer.byteLength(mcpStr, 'utf-8'),
+    diff: mcpStr.split('\n').map((l) => (l ? `+ ${l}` : '')).join('\n'),
     updatedAt: new Date().toISOString()
   });
 
@@ -82,9 +84,10 @@ function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
     fs.writeFileSync(manifestPath, manifestStr, 'utf-8');
     writtenFiles.push({
       file: manifestPath,
-      type: `Antigravity Project Manifest (${proj.name})`,
+      type: `Project Manifest (${proj.name})`,
       action: 'REGISTERED',
       sizeBytes: Buffer.byteLength(manifestStr, 'utf-8'),
+      diff: manifestStr.split('\n').map((l) => (l ? `+ ${l}` : '')).join('\n'),
       updatedAt: new Date().toISOString()
     });
   });

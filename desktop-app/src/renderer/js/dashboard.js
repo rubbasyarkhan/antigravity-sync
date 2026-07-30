@@ -223,10 +223,13 @@ async function handleSetupMachine() {
         await new Promise((r) => setTimeout(r, 50));
       }
 
-      // Provision ~/.gemini/config/
+      // Provision ~/.gemini/config/ & trigger sync logger
       progressBarFill.style.width = '100%';
       progressStepText.textContent = 'Provisioning ~/.gemini/config/ rules & workspace manifests...';
       await window.electronAPI.setupMachine(allSelected, state.workspace);
+      if (window.electronAPI.syncNow) {
+        await window.electronAPI.syncNow();
+      }
 
       progressStepText.textContent = 'All selected projects & dependencies set up successfully!';
       progressLogList.innerHTML += `<div style="color:#4ade80; font-weight:bold; margin-top:8px">> Setup complete! ${completedCount} project(s) ready in ~/Projects/</div>`;

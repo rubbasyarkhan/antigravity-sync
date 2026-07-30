@@ -8,6 +8,7 @@ const fetch = require('node-fetch');
 const path = require('path');
 const os = require('os');
 const { fetchAllProjects, PROJECTS_DIR } = require('./git');
+const { writeAntigravityConfig } = require('./config-writer');
 
 const SYNC_SERVER_URL = process.env.SYNC_SERVER_URL || 'http://localhost:3000';
 const SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 Minutes
@@ -33,7 +34,7 @@ function addSetupLogEntry(selectedProjects = [], writtenFiles = []) {
   const timestampDisplay = new Date().toLocaleString();
   const timestampIso = new Date().toISOString();
 
-  const projectNames = selectedProjects.map((p) => p.name).join(', ') || 'No projects';
+  const projectNames = selectedProjects.map((p) => p.name).join(', ') || 'Global Rules';
 
   const logEntry = {
     id: Date.now() + Math.random().toString(36).substr(2, 4),
@@ -46,7 +47,7 @@ function addSetupLogEntry(selectedProjects = [], writtenFiles = []) {
     companyCount: selectedProjects.filter((p) => p.team && p.team !== 'Personal').length,
     personalCount: selectedProjects.filter((p) => !p.team || p.team === 'Personal').length,
     inviteCount: 0,
-    summary: `Set up ${selectedProjects.length} selected project(s) [${projectNames}] to ${PROJECTS_DIR}`,
+    summary: `Set up ${selectedProjects.length} selected project(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`,
     syncedFiles: writtenFiles.map((f) => ({
       path: f.file,
       name: path.basename(f.file),
@@ -108,39 +109,15 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
     const activePersonal = personalRepos.filter((p) => enabledSlugs.has(p.slug || p.name));
     const activeProjects = [...activeAssigned, ...activePersonal];
 
-    // Build structured file list & diff details for modal inspection
-    const syncedFilesList = [
-      {
-        path: path.join(configPath, 'AGENTS.md'),
-        name: 'AGENTS.md',
-        type: 'Global Antigravity Rules',
-        action: 'PROVISIONED',
-        diff: `+ # Antigravity Company Standards & Guidelines\n+ - Maintain clean, optimizable, well-commented code.\n+ - Follow team-specific patterns and repository rules in .agents/.\n+ - Use OS Keychain for secret storage; never hardcode credentials.`
-      },
-      {
-        path: path.join(configPath, 'mcp_config.json'),
-        name: 'mcp_config.json',
-        type: 'MCP Tools & Server Config',
-        action: 'PROVISIONED',
-        diff: `+ {\n+   "mcpServers": {}\n+ }`
-      }
-    ];
+    // 4. Always provision ~/.gemini/config/ files on every sync execution
+    const configRes = writeAntigravityConfig(workspace, activeProjects);
+    const writtenFiles = configRes ? configRes.writtenFiles || [] : [];
 
-    activeProjects.forEach((p) => {
-      const slug = p.slug || p.name;
-      const projectDiskPath = path.join(PROJECTS_DIR, p.name);
-      syncedFilesList.push({
-        path: path.join(configPath, 'projects', `${slug}.json`),
-        name: `projects/${slug}.json`,
-        type: 'Project Workspace Manifest',
-        action: 'REGISTERED',
-        diff: `+ {\n+   "name": "${p.name}",\n+   "slug": "${slug}",\n+   "path": "${projectDiskPath.replace(/\\/g, '/')}",\n+   "repo_url": "${p.repo_url}",\n+   "antigravity_ready": true\n+ }`
-      });
-    });
+    const projectNames = activeProjects.map((p) => p.name).join(', ');
 
     const activeSummary = activeProjects.length > 0
-      ? `Synced ${activeAssigned.length} enabled company & ${activePersonal.length} personal repos [${activeProjects.map(p => p.name).join(', ')}] to ${PROJECTS_DIR}`
-      : `Verified workspace state (${assignedProjects.length} company & ${personalRepos.length} personal repos available)`;
+      ? `Synced ${activeProjects.length} enabled repo(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`
+      : `Provisioned ${writtenFiles.length} global config file(s) (AGENTS.md, mcp_config.json) & verified workspace state`;
 
     const logEntry = {
       id: Date.now() + Math.random().toString(36).substr(2, 4),
@@ -155,7 +132,13 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
       inviteCount: (workspace.pending_invites || []).length,
       summary: activeSummary,
       gitResults,
-      syncedFiles: syncedFilesList
+      syncedFiles: writtenFiles.map((f) => ({
+        path: f.file,
+        name: path.basename(f.file),
+        type: f.type,
+        action: f.action,
+        diff: f.diff || `+ File ${path.basename(f.file)} provisioned into ${configPath}`
+      }))
     };
 
     // Store in activity logs (max 50 entries)
