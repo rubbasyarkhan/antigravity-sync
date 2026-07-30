@@ -1,6 +1,7 @@
 /**
  * Git engine module — executes repository cloning, system environment verification,
- * dependency installation (Node.js & Python), and Antigravity IDE workspace project provisioning into ~/Projects/
+ * README instruction parsing & auto-installation (npm, yarn, pnpm, pip, poetry, go, cargo, setup scripts),
+ * and Antigravity IDE workspace project provisioning into ~/Projects/
  */
 const { spawn } = require('child_process');
 const path = require('path');
@@ -78,11 +79,66 @@ async function verifySystemEnvironment() {
 }
 
 /**
- * Auto-installs Node.js & Python dependencies and provisions local .agents/ directory
+ * Parses README.md file inside cloned repo for setup & installation commands and executes them
+ */
+async function parseAndExecuteReadmeInstructions(projectName, targetDir, onProgress = () => {}) {
+  const readmeActions = [];
+  const readmeNames = ['README.md', 'readme.md', 'README.txt', 'README'];
+  let readmeContent = '';
+
+  for (const name of readmeNames) {
+    const full = path.join(targetDir, name);
+    if (fs.existsSync(full)) {
+      try {
+        readmeContent = fs.readFileSync(full, 'utf-8');
+        break;
+      } catch (e) {}
+    }
+  }
+
+  // Check for yarn lock file or README yarn reference
+  if (fs.existsSync(path.join(targetDir, 'yarn.lock')) || /yarn install/i.test(readmeContent)) {
+    onProgress(projectName, 'reading README: running yarn install...');
+    await runShellCmd('yarn', ['install'], targetDir);
+    readmeActions.push('yarn install');
+  }
+
+  // Check for pnpm lock file or README pnpm reference
+  if (fs.existsSync(path.join(targetDir, 'pnpm-lock.yaml')) || /pnpm install/i.test(readmeContent)) {
+    onProgress(projectName, 'reading README: running pnpm install...');
+    await runShellCmd('pnpm', ['install'], targetDir);
+    readmeActions.push('pnpm install');
+  }
+
+  // Check for poetry / pyproject.toml
+  if (fs.existsSync(path.join(targetDir, 'poetry.lock')) || /poetry install/i.test(readmeContent)) {
+    onProgress(projectName, 'reading README: running poetry install...');
+    await runShellCmd('poetry', ['install'], targetDir);
+    readmeActions.push('poetry install');
+  }
+
+  // Check for setup.sh or setup.bat
+  const setupSh = path.join(targetDir, 'setup.sh');
+  const setupBat = path.join(targetDir, 'setup.bat');
+  if (fs.existsSync(setupBat) && process.platform === 'win32') {
+    onProgress(projectName, 'reading README: executing setup.bat...');
+    await runShellCmd('cmd.exe', ['/c', 'setup.bat'], targetDir);
+    readmeActions.push('setup.bat script');
+  } else if (fs.existsSync(setupSh)) {
+    onProgress(projectName, 'reading README: executing setup.sh...');
+    await runShellCmd('bash', ['./setup.sh'], targetDir);
+    readmeActions.push('setup.sh script');
+  }
+
+  return readmeActions;
+}
+
+/**
+ * Auto-installs Node.js & Python dependencies, parses README instructions, and provisions local .agents/ directory
  */
 async function installDependenciesAndProvision(projectName, targetDir, onProgress = () => {}) {
   const installedTech = [];
-  const details = { npmInstalled: false, pipInstalled: false, agentsCreated: false };
+  const details = { npmInstalled: false, pipInstalled: false, readmeParsed: false, agentsCreated: false };
 
   // 1. Provision local .agents/AGENTS.md for instant Antigravity AI conversation readiness
   const agentsDir = path.join(targetDir, '.agents');
@@ -105,7 +161,7 @@ async function installDependenciesAndProvision(projectName, targetDir, onProgres
 
   // 2. Node.js dependency installation (package.json)
   if (fs.existsSync(path.join(targetDir, 'package.json'))) {
-    onProgress(projectName, 'installing npm packages...');
+    onProgress(projectName, 'installing npm packages (package.json)...');
     await runShellCmd('npm', ['install', '--no-audit', '--no-fund'], targetDir);
     installedTech.push('npm packages');
     details.npmInstalled = true;
@@ -113,10 +169,17 @@ async function installDependenciesAndProvision(projectName, targetDir, onProgres
 
   // 3. Python dependency installation (requirements.txt)
   if (fs.existsSync(path.join(targetDir, 'requirements.txt'))) {
-    onProgress(projectName, 'installing python requirements...');
+    onProgress(projectName, 'installing python requirements (requirements.txt)...');
     await runShellCmd('python', ['-m', 'pip', 'install', '-r', 'requirements.txt'], targetDir);
     installedTech.push('pip requirements');
     details.pipInstalled = true;
+  }
+
+  // 4. Parse README instructions and execute special setup steps
+  const readmeActions = await parseAndExecuteReadmeInstructions(projectName, targetDir, onProgress);
+  if (readmeActions.length > 0) {
+    installedTech.push(...readmeActions);
+    details.readmeParsed = true;
   }
 
   return { installedTech, details };
@@ -151,13 +214,13 @@ async function cloneProjects(projects, onProgress = () => {}) {
         await runShellCmd('git', ['clone', project.repo_url, targetDir], PROJECTS_DIR);
       }
 
-      // Auto-install dependencies (Node.js/npm & Python/pip) + provision .agents/
-      onProgress(project.name, 'installing dependencies...', i + 1, projects.length);
+      // Auto-install dependencies (Node.js/npm, Python/pip, README.md commands) + provision .agents/
+      onProgress(project.name, 'reading README & installing dependencies...', i + 1, projects.length);
       const { installedTech, details } = await installDependenciesAndProvision(project.name, targetDir, (name, step) => onProgress(name, step, i + 1, projects.length));
 
       const statusMsg = isUpdate
-        ? `Updated & verified dependencies (${installedTech.join(', ') || 'already installed'})`
-        : `Cloned & installed dependencies (${installedTech.join(', ') || 'ready'})`;
+        ? `Updated repo & verified dependencies (${installedTech.join(', ') || 'already installed'})`
+        : `Cloned repo, parsed README & installed dependencies (${installedTech.join(', ') || 'ready'})`;
 
       results.push({
         name: project.name,
