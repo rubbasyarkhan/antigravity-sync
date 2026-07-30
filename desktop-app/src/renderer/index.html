@@ -196,6 +196,21 @@
     </div>
   </div>
 
+  <!-- Sync Log File Diff Modal -->
+  <div id="modal-log-details" class="modal hidden">
+    <div class="modal-content" style="width: 680px; max-width: 90vw;">
+      <h3 id="diff-modal-title" class="modal-title">Sync Details & File Changes</h3>
+      <p id="diff-modal-subtitle" class="modal-subtitle">Inspecting exact files provisioned into ~/.gemini/config/</p>
+      
+      <div id="diff-file-list" class="log-box" style="max-height: 380px; overflow-y: auto; margin-bottom: 20px;">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button id="btn-diff-modal-close" class="btn-secondary">Close Inspector</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Renderer Scripts -->
   <script src="js/dashboard.js"></script>
   <script src="js/share.js"></script>

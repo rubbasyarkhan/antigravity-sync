@@ -1,5 +1,5 @@
 /**
- * Main Renderer App Logic — With Single-Scrollbar Progressive Disclosure UX Architecture
+ * Main Renderer App Logic — With Sync Inspection Diff Modal & Single-Scrollbar UX Architecture
  */
 const SYNC_SERVER_URL = 'http://localhost:3000';
 
@@ -12,6 +12,7 @@ let state = {
 };
 
 let showAllLogs = false;
+let currentLogsCache = [];
 
 // UI Element References
 const screenLogin = document.getElementById('screen-login');
@@ -26,6 +27,13 @@ const btnOpenFolder = document.getElementById('btn-open-folder');
 document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
   setupEventListeners();
+
+  const btnDiffClose = document.getElementById('btn-diff-modal-close');
+  if (btnDiffClose) {
+    btnDiffClose.addEventListener('click', () => {
+      document.getElementById('modal-log-details').classList.add('hidden');
+    });
+  }
 
   // Check for saved JWT token in OS Keychain
   if (window.electronAPI) {
@@ -205,7 +213,59 @@ function toggleShowAllLogs() {
   }
 }
 
+function openLogDetailsModal(logId) {
+  const log = currentLogsCache.find((l) => String(l.id) === String(logId));
+  if (!log) return;
+
+  const modal = document.getElementById('modal-log-details');
+  const title = document.getElementById('diff-modal-title');
+  const subtitle = document.getElementById('diff-modal-subtitle');
+  const diffContainer = document.getElementById('diff-file-list');
+
+  title.textContent = `Sync Inspection: ${log.triggerType || 'Activity Log'}`;
+  subtitle.textContent = `Execution Time: ${log.timestamp} • Target: ${log.configPath}`;
+
+  const files = log.syncedFiles || [];
+  if (files.length === 0) {
+    diffContainer.innerHTML = '<div class="empty-state">No individual file diffs recorded for this sync run.</div>';
+  } else {
+    diffContainer.innerHTML = files
+      .map((f) => {
+        const diffLines = (f.diff || '')
+          .split('\n')
+          .map((line) => {
+            if (line.startsWith('+')) {
+              return `<div style="background: rgba(22, 163, 74, 0.2); color: #4ade80; padding: 2px 6px;">${escapeHtml(line)}</div>`;
+            } else if (line.startsWith('-')) {
+              return `<div style="background: rgba(220, 38, 38, 0.2); color: #f87171; padding: 2px 6px;">${escapeHtml(line)}</div>`;
+            }
+            return `<div style="color: #cbd5e1; padding: 2px 6px;">${escapeHtml(line)}</div>`;
+          })
+          .join('');
+
+        return `
+        <div style="border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; overflow: hidden; background: #060911;">
+          <div style="background: #1e293b; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);">
+            <strong style="color: #f8fafc; font-size: 13px;">${escapeHtml(f.name)}</strong>
+            <span style="background: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${escapeHtml(f.action)}</span>
+          </div>
+          <div style="padding: 6px 12px; font-size: 11px; color: var(--text-muted); border-bottom: 1px dashed var(--border-color);">
+            Path: <span style="color:#ffffff;">${escapeHtml(f.path)}</span>
+          </div>
+          <div style="padding: 8px; font-family: monospace; font-size: 11px; line-height: 1.4;">
+            ${diffLines}
+          </div>
+        </div>
+      `;
+      })
+      .join('');
+  }
+
+  modal.classList.remove('hidden');
+}
+
 function renderSyncLogs(logs = []) {
+  currentLogsCache = logs;
   const container = document.getElementById('sync-activity-logs');
   if (!container) return;
 
@@ -222,9 +282,10 @@ function renderSyncLogs(logs = []) {
       const isManual = log.triggerType && log.triggerType.includes('Manual');
       const badgeColor = isManual ? '#2563eb' : '#7c3aed';
       const typeLabel = isManual ? 'MANUAL' : 'AUTOMATIC';
+      const fileCount = (log.syncedFiles || []).length;
 
       return `
-      <div style="border-bottom: 1px solid var(--border-color); padding: 12px 0; font-size: 12px; font-family: monospace;">
+      <div style="border-bottom: 1px solid var(--border-color); padding: 14px 0; font-size: 12px; font-family: monospace;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="background:${badgeColor}; color:#ffffff; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;">${typeLabel}</span>
           <span style="color: var(--text-muted); font-size: 11px;">Time: ${log.timestamp}</span>
@@ -232,8 +293,11 @@ function renderSyncLogs(logs = []) {
         <div style="color: ${isError ? '#f87171' : '#4ade80'}; font-weight: 600; margin-bottom: 4px;">${escapeHtml(log.summary)}</div>
         <div style="color: var(--text-muted); font-size: 11px;">Projects Directory: <span style="color:#ffffff;">${escapeHtml(log.targetPath)}</span></div>
         <div style="color: var(--text-muted); font-size: 11px;">Config Directory: <span style="color:#ffffff;">${escapeHtml(log.configPath)}</span></div>
-        <div style="margin-top: 6px; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 4px; font-size: 11px; color: #60a5fa;">
-          Synced Config Files: AGENTS.md (Global Rules), mcp_config.json (Tools), projects/*.json (Manifests)
+        <div style="margin-top: 8px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size: 11px; color: #60a5fa;">Synced ${fileCount} Config & Manifest File(s)</span>
+          <button class="btn-secondary" onclick="openLogDetailsModal('${log.id}')" style="font-size: 11px; padding: 4px 10px;">
+            Inspect Synced File Changes (${fileCount})
+          </button>
         </div>
       </div>
     `;
