@@ -1,11 +1,12 @@
 /**
- * Dashboard & Project List Rendering Engine with Real-Time Search, Pagination & Local Cloned Check
+ * Dashboard & Project List Rendering Engine with Real-Time Search, Pagination & Non-blocking Local Cloned Check
  */
 let searchQuery = '';
 let companyPage = 1;
 let personalPage = 1;
 const ITEMS_PER_PAGE = 6;
 const localClonedMap = new Map(); // Cache local existence check per project
+let isCheckingLocal = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('project-search-input');
@@ -34,31 +35,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-async function checkProjectLocalStatus(projects = []) {
-  if (!window.electronAPI || !window.electronAPI.checkLocalExist) return;
+function checkProjectLocalStatusAsync(projects = []) {
+  if (!window.electronAPI || !window.electronAPI.checkLocalExist || isCheckingLocal) return;
 
-  for (const proj of projects) {
-    const name = proj.name;
-    if (!localClonedMap.has(name)) {
-      const exists = await window.electronAPI.checkLocalExist(name);
-      localClonedMap.set(name, exists);
-    }
+  isCheckingLocal = true;
+  const uncached = projects.filter((p) => p && p.name && !localClonedMap.has(p.name));
+
+  if (uncached.length === 0) {
+    isCheckingLocal = false;
+    return;
   }
+
+  Promise.all(
+    uncached.map(async (proj) => {
+      try {
+        const exists = await window.electronAPI.checkLocalExist(proj.name);
+        localClonedMap.set(proj.name, exists);
+      } catch (e) {
+        localClonedMap.set(proj.name, false);
+      }
+    })
+  ).then(() => {
+    isCheckingLocal = false;
+    renderProjects(true); // Re-render badges silently once checked
+  });
 }
 
-async function renderProjects() {
+function renderProjects(skipLocalCheck = false) {
   const companyContainer = document.getElementById('company-projects-list');
   const personalContainer = document.getElementById('personal-projects-list');
   const companyPagContainer = document.getElementById('company-pagination');
   const personalPagContainer = document.getElementById('personal-pagination');
 
-  if (!state.workspace) return;
+  if (!state || !state.workspace) return;
 
   let assigned = state.workspace.assigned_projects || [];
   let personal = state.workspace.personal_repos || [];
-
-  // Check local disk status for all loaded projects
-  await checkProjectLocalStatus([...assigned, ...personal]);
 
   // Filter projects based on real-time search query
   if (searchQuery) {
@@ -86,14 +98,13 @@ async function renderProjects() {
     companyContainer.innerHTML = `<div class="empty-state">${
       searchQuery
         ? `No company projects match "${escapeHtml(searchQuery)}".`
-        : `No company projects assigned to @${state.user.github_login} yet.`
+        : `No company projects assigned to @${state.user ? state.user.github_login : ''} yet.`
     }</div>`;
     companyPagContainer.innerHTML = '';
   } else {
     companyContainer.innerHTML = paginatedCompany
       .map((proj) => {
-        // Toggle OFF by default unless explicitly toggled ON
-        const isEnabled = state.enabledSlugs.has(proj.slug);
+        const isEnabled = state.enabledSlugs ? state.enabledSlugs.has(proj.slug) : false;
         const isCloned = localClonedMap.get(proj.name);
         const localBadge = isCloned
           ? `<span class="badge-local" style="background-color: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.4); font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 8px;">✅ Already Cloned</span>`
@@ -116,7 +127,7 @@ async function renderProjects() {
 
     renderPaginationControls(companyPagContainer, companyPage, totalCompanyPages, (newPage) => {
       companyPage = newPage;
-      renderProjects();
+      renderProjects(true);
     });
   }
 
@@ -137,7 +148,6 @@ async function renderProjects() {
     personalContainer.innerHTML = paginatedPersonal
       .map((proj) => {
         const slug = proj.slug || proj.name;
-        // Toggle OFF by default unless explicitly toggled ON
         const isEnabled = state.enabledPersonalSlugs ? state.enabledPersonalSlugs.has(slug) : false;
         const isCloned = localClonedMap.get(proj.name);
         const localBadge = isCloned
@@ -164,8 +174,13 @@ async function renderProjects() {
 
     renderPaginationControls(personalPagContainer, personalPage, totalPersonalPages, (newPage) => {
       personalPage = newPage;
-      renderProjects();
+      renderProjects(true);
     });
+  }
+
+  // Trigger non-blocking async disk checks
+  if (!skipLocalCheck) {
+    checkProjectLocalStatusAsync([...assigned, ...personal]);
   }
 }
 
@@ -232,8 +247,8 @@ async function handleToggleChange(checkbox) {
 }
 
 async function handleSetupMachine() {
-  const assigned = state.workspace.assigned_projects || [];
-  const personal = state.workspace.personal_repos || [];
+  const assigned = state.workspace ? (state.workspace.assigned_projects || []) : [];
+  const personal = state.workspace ? (state.workspace.personal_repos || []) : [];
 
   const selectedCompany = assigned.filter(
     (p) => state.enabledSlugs && state.enabledSlugs.has(p.slug)
@@ -304,7 +319,7 @@ async function handleSetupMachine() {
       btnProgressClose.classList.remove('hidden');
 
       // Re-render UI to update local badges
-      renderProjects();
+      renderProjects(true);
     } catch (err) {
       console.error('Setup machine error:', err);
       progressStepText.textContent = '❌ Setup encountered an error.';
