@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getToken: () => ipcRenderer.invoke('auth:getToken'),
 
   // Sync IPC
-  syncNow: () => ipcRenderer.invoke('sync:now'),
+  syncNow: (activeProjects) => ipcRenderer.invoke('sync:now', activeProjects),
   getSyncLogs: () => ipcRenderer.invoke('sync:getLogs'),
 
   // Git & Provisioning IPC

@@ -69,8 +69,10 @@ function addSetupLogEntry(selectedProjects = [], writtenFiles = []) {
 
 /**
  * Execute background or manual sync and record activity log
+ * @param {string} triggerType - 'Manual (Sync Now)' or 'Automatic (15-Min Timer)'
+ * @param {Array} activeProjectsOverride - Optional list of projects toggled ON in renderer
  */
-async function performSync(triggerType = 'Automatic (15-Min Timer)') {
+async function performSync(triggerType = 'Automatic (15-Min Timer)', activeProjectsOverride = null) {
   if (isSyncing || !currentToken) return;
   isSyncing = true;
 
@@ -101,13 +103,18 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
     // 3. Perform lightweight git fetch check across cloned repos
     const gitResults = await fetchAllProjects();
 
-    const enabledSlugs = new Set(workspace.enabled_slugs || []);
-    const assignedProjects = workspace.assigned_projects || [];
-    const personalRepos = workspace.personal_repos || [];
+    let activeProjects = [];
+    if (Array.isArray(activeProjectsOverride)) {
+      activeProjects = activeProjectsOverride;
+    } else {
+      const enabledSlugs = new Set(workspace.enabled_slugs || []);
+      const assignedProjects = workspace.assigned_projects || [];
+      const personalRepos = workspace.personal_repos || [];
 
-    const activeAssigned = assignedProjects.filter((p) => enabledSlugs.has(p.slug));
-    const activePersonal = personalRepos.filter((p) => enabledSlugs.has(p.slug || p.name));
-    const activeProjects = [...activeAssigned, ...activePersonal];
+      const activeAssigned = assignedProjects.filter((p) => enabledSlugs.has(p.slug));
+      const activePersonal = personalRepos.filter((p) => enabledSlugs.has(p.slug || p.name));
+      activeProjects = [...activeAssigned, ...activePersonal];
+    }
 
     // 4. Always provision ~/.gemini/config/ files on every sync execution
     const configRes = writeAntigravityConfig(workspace, activeProjects);
@@ -116,7 +123,7 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
     const projectNames = activeProjects.map((p) => p.name).join(', ');
 
     const activeSummary = activeProjects.length > 0
-      ? `Synced ${activeProjects.length} enabled repo(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`
+      ? `Synced ${activeProjects.length} enabled project(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`
       : `Provisioned ${writtenFiles.length} global config file(s) (AGENTS.md, mcp_config.json) & verified workspace state`;
 
     const logEntry = {
@@ -127,8 +134,8 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
       status: 'Success',
       targetPath: PROJECTS_DIR,
       configPath: configPath,
-      companyCount: activeAssigned.length,
-      personalCount: activePersonal.length,
+      companyCount: activeProjects.filter(p => p.team && p.team !== 'Personal').length,
+      personalCount: activeProjects.filter(p => !p.team || p.team === 'Personal').length,
       inviteCount: (workspace.pending_invites || []).length,
       summary: activeSummary,
       gitResults,
@@ -175,6 +182,8 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)') {
 
 function startSyncEngine(token) {
   currentToken = token;
+  // Wipe stale in-memory logs on initial login session start
+  syncLogs.length = 0;
   performSync('Automatic (Initial Auth Sync)');
 
   if (syncTimer) clearInterval(syncTimer);
@@ -188,11 +197,12 @@ function stopSyncEngine() {
     syncTimer = null;
   }
   currentToken = null;
+  syncLogs.length = 0;
   console.log('⏹️  Background sync engine stopped');
 }
 
-async function syncNow() {
-  await performSync('Manual (Sync Now)');
+async function syncNow(activeProjectsOverride = null) {
+  await performSync('Manual (Sync Now)', activeProjectsOverride);
   return { success: true, logs: syncLogs };
 }
 

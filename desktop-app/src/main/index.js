@@ -91,8 +91,8 @@ function setupIPC() {
     return await getToken('jwt');
   });
 
-  ipcMain.handle('sync:now', async () => {
-    return await syncNow();
+  ipcMain.handle('sync:now', async (_event, activeProjects) => {
+    return await syncNow(activeProjects);
   });
 
   ipcMain.handle('sync:getLogs', async () => {

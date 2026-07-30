@@ -121,7 +121,13 @@ function setupEventListeners() {
   const triggerSync = async () => {
     if (window.electronAPI) {
       updateSyncStatus('Syncing...');
-      const res = await window.electronAPI.syncNow();
+      const assigned = state.workspace ? (state.workspace.assigned_projects || []) : [];
+      const personal = state.workspace ? (state.workspace.personal_repos || []) : [];
+      const activeCompany = assigned.filter((p) => state.enabledSlugs && state.enabledSlugs.has(p.slug));
+      const activePersonal = personal.filter((p) => state.enabledPersonalSlugs && state.enabledPersonalSlugs.has(p.slug || p.name));
+      const selectedProjects = [...activeCompany, ...activePersonal];
+
+      const res = await window.electronAPI.syncNow(selectedProjects);
       if (res && res.logs) {
         renderSyncLogs(res.logs);
       }
