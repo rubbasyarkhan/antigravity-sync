@@ -1,5 +1,5 @@
 /**
- * Main Renderer App Logic
+ * Main Renderer App Logic — With Single-Scrollbar Progressive Disclosure UX Architecture
  */
 const SYNC_SERVER_URL = 'http://localhost:3000';
 
@@ -10,6 +10,8 @@ let state = {
   enabledSlugs: new Set(),
   enabledPersonalSlugs: new Set(),
 };
+
+let showAllLogs = false;
 
 // UI Element References
 const screenLogin = document.getElementById('screen-login');
@@ -196,6 +198,13 @@ function updateSyncStatus(statusText, timeIso) {
   }
 }
 
+function toggleShowAllLogs() {
+  showAllLogs = !showAllLogs;
+  if (window.electronAPI && window.electronAPI.getSyncLogs) {
+    window.electronAPI.getSyncLogs().then((logs) => renderSyncLogs(logs));
+  }
+}
+
 function renderSyncLogs(logs = []) {
   const container = document.getElementById('sync-activity-logs');
   if (!container) return;
@@ -205,7 +214,9 @@ function renderSyncLogs(logs = []) {
     return;
   }
 
-  container.innerHTML = logs
+  const visibleLogs = showAllLogs ? logs : logs.slice(0, 5);
+
+  let html = visibleLogs
     .map((log) => {
       const isError = log.status === 'Error';
       const isManual = log.triggerType && log.triggerType.includes('Manual');
@@ -228,4 +239,16 @@ function renderSyncLogs(logs = []) {
     `;
     })
     .join('');
+
+  if (logs.length > 5) {
+    html += `
+      <div style="text-align: center; margin-top: 14px;">
+        <button class="btn-secondary" onclick="toggleShowAllLogs()" style="font-size: 12px; padding: 6px 14px;">
+          ${showAllLogs ? 'Collapse Activity Logs' : `View All ${logs.length} Log Entries`}
+        </button>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
 }

@@ -36,6 +36,25 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Custom Sleek Viewport Scrollbar (Eliminating OS Scrollbar Glop) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b1329;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
 body {
   font-family: var(--font-family);
   background-color: var(--bg-canvas);
@@ -45,10 +64,7 @@ body {
   user-select: none;
 }
 
-/* ==========================================================================
-   Screen Layouts
-   ========================================================================== */
-
+/* Screen Layouts */
 .screen {
   display: none;
   height: 100vh;
@@ -252,7 +268,7 @@ body {
   font-size: 12px;
 }
 
-/* Main Dashboard Content */
+/* Main Dashboard Content — Single Main Scrollbar */
 .main-content {
   flex: 1;
   padding: 32px 40px;
@@ -480,6 +496,7 @@ input:checked + .slider:before {
   transition: width 0.2s ease;
 }
 
+/* Log Box Stream — Natural Growth Without Nested Scrollbars */
 .log-box {
   background-color: #0b1329;
   border: 1px solid var(--border-color);
@@ -487,9 +504,6 @@ input:checked + .slider:before {
   padding: 14px;
   font-family: var(--font-mono);
   font-size: 12px;
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 16px;
 }
 
 .empty-state {
