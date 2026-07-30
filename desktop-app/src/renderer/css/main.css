@@ -1,35 +1,29 @@
 /* ==========================================================================
-   Antigravity Sync — Premium Design System & UI Styling
+   Antigravity Sync — Minimalist Solid Color Design System
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Color System */
-  --bg-canvas: #090d16;
-  --bg-surface: #111827;
-  --bg-sidebar: #060911;
-  --bg-hover: #1f2937;
-  --border-color: #1e293b;
-  --border-focus: #3b82f6;
+  /* Solid Color Palette — No Gradients, No AI Glop */
+  --bg-canvas: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-sidebar: #0b1329;
+  --bg-hover: #334155;
+  --border-color: #334155;
+  --border-focus: #2563eb;
 
   /* Typography */
   --text-heading: #f8fafc;
   --text-body: #cbd5e1;
-  --text-muted: #64748b;
+  --text-muted: #94a3b8;
 
-  /* Accents */
-  --emerald-main: #10b981;
-  --emerald-hover: #059669;
-  --blue-main: #3b82f6;
-  --blue-hover: #2563eb;
-  --purple-main: #8b5cf6;
-  --red-main: #ef4444;
-
-  /* Shadows & Glassmorphism */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 25px -5px rgba(16, 185, 129, 0.3);
+  /* Solid Accents */
+  --green-solid: #16a34a;
+  --green-hover: #15803d;
+  --blue-solid: #2563eb;
+  --blue-hover: #1d4ed8;
+  --red-solid: #dc2626;
 
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -52,7 +46,7 @@ body {
 }
 
 /* ==========================================================================
-   Screen Containers
+   Screen Layouts
    ========================================================================== */
 
 .screen {
@@ -65,105 +59,74 @@ body {
   display: flex;
 }
 
-/* ==========================================================================
-   Login Screen (Hero Glassmorphism)
-   ========================================================================== */
-
+/* Login Screen */
 #screen-login {
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 30%, #1e1b4b 0%, #090d16 70%);
+  background-color: var(--bg-canvas);
 }
 
 .login-card {
   text-align: center;
-  padding: 48px;
-  background: rgba(17, 24, 39, 0.85);
-  backdrop-filter: blur(16px);
+  padding: 40px;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
-  max-width: 440px;
+  border-radius: 12px;
+  max-width: 420px;
   width: 90%;
 }
 
-.logo-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-  border-radius: 16px;
-  font-size: 32px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-glow);
-}
-
 .login-card h1 {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text-heading);
-  letter-spacing: -0.5px;
 }
 
 .login-card p {
   color: var(--text-muted);
   font-size: 14px;
-  line-height: 1.5;
-  margin-top: 8px;
-  margin-bottom: 32px;
+  margin-top: 6px;
+  margin-bottom: 28px;
 }
 
-/* ==========================================================================
-   Buttons & Interactive Elements
-   ========================================================================== */
-
+/* Buttons — Solid Colors Only */
 .btn-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background-color: var(--green-solid);
   color: #ffffff;
   border: none;
-  border-radius: 10px;
-  padding: 12px 24px;
+  border-radius: 8px;
+  padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  gap: 8px;
+  transition: background-color 0.15s ease;
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
+  background-color: var(--green-hover);
 }
 
 .btn-setup-hero {
-  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+  background-color: var(--blue-solid);
   color: #ffffff;
   border: none;
-  border-radius: 10px;
-  padding: 12px 24px;
+  border-radius: 8px;
+  padding: 10px 20px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  gap: 8px;
+  transition: background-color 0.15s ease;
 }
 
 .btn-setup-hero:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+  background-color: var(--blue-hover);
 }
 
 .btn-secondary {
@@ -175,59 +138,48 @@ body {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .btn-secondary:hover {
   background-color: var(--bg-hover);
-  border-color: var(--text-muted);
 }
 
 .btn-danger {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background-color: var(--red-solid);
+  color: #ffffff;
+  border: none;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 
-.btn-danger:hover {
-  background-color: var(--red-main);
-  color: #ffffff;
-}
-
-/* ==========================================================================
-   Sidebar Navigation
-   ========================================================================== */
-
+/* Sidebar */
 .sidebar {
-  width: 250px;
+  width: 240px;
   background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 24px 16px;
+  padding: 20px 16px;
 }
 
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 16px;
   color: var(--text-heading);
-  margin-bottom: 32px;
-  padding-left: 8px;
+  margin-bottom: 28px;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
 }
 
@@ -235,20 +187,20 @@ body {
   background: transparent;
   border: 1px solid transparent;
   color: var(--text-muted);
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   transition: all 0.15s ease;
 }
 
 .nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: var(--bg-surface);
   color: var(--text-heading);
 }
 
@@ -260,12 +212,12 @@ body {
 }
 
 .badge {
-  background: var(--blue-main);
+  background-color: var(--blue-solid);
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
   margin-left: auto;
 }
 
@@ -276,22 +228,22 @@ body {
 .sidebar-user {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-top: 20px;
+  gap: 10px;
+  padding-top: 16px;
   border-top: 1px solid var(--border-color);
 }
 
 .avatar {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  border: 2px solid var(--emerald-main);
+  background-color: var(--border-color);
 }
 
 .user-info span {
   font-weight: 600;
   color: var(--text-heading);
-  font-size: 14px;
+  font-size: 13px;
   display: block;
 }
 
@@ -300,13 +252,10 @@ body {
   font-size: 12px;
 }
 
-/* ==========================================================================
-   Main Dashboard Area
-   ========================================================================== */
-
+/* Main Dashboard Content */
 .main-content {
   flex: 1;
-  padding: 36px 48px;
+  padding: 32px 40px;
   overflow-y: auto;
 }
 
@@ -322,20 +271,18 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .tab-header h2 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-heading);
-  letter-spacing: -0.5px;
 }
 
-/* Real-Time Search Bar */
+/* Search Bar */
 .search-container {
-  margin-bottom: 28px;
-  position: relative;
+  margin-bottom: 24px;
 }
 
 .search-input {
@@ -343,72 +290,48 @@ body {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   color: var(--text-heading);
-  padding: 12px 16px 12px 42px;
-  border-radius: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
   font-size: 14px;
-  transition: all 0.2s ease;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--blue-main);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  border-color: var(--blue-solid);
 }
 
-.search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  font-size: 16px;
-}
-
-/* ==========================================================================
-   Project Cards & Sections
-   ========================================================================== */
-
+/* Project Lists */
 .project-section {
-  margin-bottom: 36px;
+  margin-bottom: 32px;
 }
 
 .section-title {
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   color: var(--text-muted);
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .project-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .project-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 20px 24px;
+  border-radius: 8px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.project-card:hover {
-  transform: translateY(-2px);
-  border-color: #334155;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
 .project-details h4 {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-heading);
 }
@@ -416,27 +339,24 @@ body {
 .project-details p {
   font-size: 13px;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .team-tag {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: var(--blue-main);
-  padding: 2px 8px;
-  border-radius: 6px;
+  background-color: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+  padding: 2px 6px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
 }
 
-/* ==========================================================================
-   Toggle Switches
-   ========================================================================== */
-
+/* Toggle Switch — Solid Green When On */
 .switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 28px;
+  width: 44px;
+  height: 24px;
 }
 
 .switch input {
@@ -449,50 +369,45 @@ body {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #334155;
-  transition: .25s;
-  border-radius: 28px;
+  background-color: #475569;
+  transition: .2s;
+  border-radius: 24px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 22px;
-  width: 22px;
+  height: 18px;
+  width: 18px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: .25s;
+  transition: .2s;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 input:checked + .slider {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+  background-color: var(--green-solid);
 }
 
 input:checked + .slider:before {
-  transform: translateX(22px);
+  transform: translateX(20px);
 }
 
-/* ==========================================================================
-   Sync Status Card & Log Stream
-   ========================================================================== */
-
+/* Sync Status & Settings */
 .sync-status-card, .settings-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 540px;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
 }
 
 .sync-row, .setting-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 0;
+  padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -503,21 +418,20 @@ input:checked + .slider:before {
 .status-badge {
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 
 .status-badge.synced {
-  background-color: rgba(16, 185, 129, 0.15);
-  color: var(--emerald-main);
+  background-color: rgba(22, 163, 74, 0.2);
+  color: #4ade80;
 }
 
 /* Modal Overlay */
 .modal {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
-  background-color: rgba(9, 13, 22, 0.85);
-  backdrop-filter: blur(8px);
+  background-color: rgba(15, 23, 42, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -531,14 +445,13 @@ input:checked + .slider:before {
 .modal-content {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 32px;
-  width: 520px;
-  box-shadow: var(--shadow-card);
+  border-radius: 12px;
+  padding: 28px;
+  width: 480px;
 }
 
 .modal-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-heading);
 }
@@ -547,43 +460,44 @@ input:checked + .slider:before {
   font-size: 13px;
   color: var(--text-muted);
   margin-top: 4px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .progress-bar-bg {
   width: 100%;
   height: 8px;
-  background-color: var(--border-color);
+  background-color: #0f172a;
   border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-color);
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+  background-color: var(--green-solid);
   width: 5%;
-  transition: width 0.3s ease;
+  transition: width 0.2s ease;
 }
 
 .log-box {
-  background-color: #060911;
+  background-color: #0b1329;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 14px;
   font-family: var(--font-mono);
   font-size: 12px;
   max-height: 200px;
   overflow-y: auto;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .empty-state {
-  padding: 24px;
+  padding: 20px;
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
   background-color: var(--bg-surface);
   border: 1px dashed var(--border-color);
-  border-radius: 10px;
+  border-radius: 8px;
 }

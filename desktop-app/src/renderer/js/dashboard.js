@@ -179,7 +179,7 @@ async function handleSetupMachine() {
   modalProgress.classList.remove('hidden');
   btnProgressClose.classList.add('hidden');
   progressBarFill.style.width = '5%';
-  progressStepText.textContent = '⚡ Verifying system environment...';
+  progressStepText.textContent = 'Verifying system environment...';
   progressLogList.innerHTML = '<div>> Verifying Node.js, Python, and Git installation...</div>';
 
   if (window.electronAPI) {
@@ -201,7 +201,7 @@ async function handleSetupMachine() {
         const pct = Math.round(((i + 1) / allSelected.length) * 90);
         progressBarFill.style.width = `${pct}%`;
 
-        progressStepText.textContent = `📦 Processing & installing dependencies (${i + 1}/${allSelected.length}): ${proj.name}...`;
+        progressStepText.textContent = `Processing & installing dependencies (${i + 1}/${allSelected.length}): ${proj.name}...`;
 
         // Yield UI thread to keep Electron responsive and paint DOM updates
         await new Promise((r) => setTimeout(r, 50));
@@ -213,24 +213,24 @@ async function handleSetupMachine() {
         const resItem = result && result[0] ? result[0] : { status: 'done' };
         const isError = resItem.status === 'error';
 
-        const statusIcon = isError ? '❌' : '✅';
+        const statusTag = isError ? '[ERROR]' : '[OK]';
         const statusMsg = isError
           ? `Error: ${resItem.error}`
           : resItem.message || 'Cloned, dependencies installed & Antigravity AI ready';
 
-        progressLogList.innerHTML += `<div style="color:${isError ? '#f87171' : '#4ade80'}">${statusIcon} ${proj.name}: ${statusMsg}</div>`;
+        progressLogList.innerHTML += `<div style="color:${isError ? '#f87171' : '#4ade80'}">${statusTag} ${proj.name}: ${statusMsg}</div>`;
         progressLogList.scrollTop = progressLogList.scrollHeight;
         await new Promise((r) => setTimeout(r, 50));
       }
 
       // Provision ~/.gemini/config/
       progressBarFill.style.width = '100%';
-      progressStepText.textContent = '✅ Provisioning ~/.gemini/config/ rules & workspace manifests...';
+      progressStepText.textContent = 'Provisioning ~/.gemini/config/ rules & workspace manifests...';
       await window.electronAPI.setupMachine(allSelected, state.workspace);
 
-      progressStepText.textContent = '🎉 All selected projects & dependencies set up successfully!';
+      progressStepText.textContent = 'All selected projects & dependencies set up successfully!';
       progressLogList.innerHTML += `<div style="color:#4ade80; font-weight:bold; margin-top:8px">> Setup complete! ${completedCount} project(s) ready in ~/Projects/</div>`;
-      progressLogList.innerHTML += `<div style="color:#60a5fa">> Dependencies installed (npm/pip) & .agents rules written for Antigravity AI chat!</div>`;
+      progressLogList.innerHTML += `<div style="color:#60a5fa">> Dependencies installed & .agents rules written for Antigravity AI chat.</div>`;
       btnProgressClose.classList.remove('hidden');
 
       renderProjects();

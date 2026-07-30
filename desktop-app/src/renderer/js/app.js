@@ -209,20 +209,20 @@ function renderSyncLogs(logs = []) {
     .map((log) => {
       const isError = log.status === 'Error';
       const isManual = log.triggerType && log.triggerType.includes('Manual');
-      const badgeColor = isManual ? '#3b82f6' : '#8b5cf6';
-      const typeLabel = isManual ? '🖱️ MANUAL' : '🔄 AUTOMATIC';
+      const badgeColor = isManual ? '#2563eb' : '#7c3aed';
+      const typeLabel = isManual ? 'MANUAL' : 'AUTOMATIC';
 
       return `
       <div style="border-bottom: 1px solid var(--border-color); padding: 12px 0; font-size: 12px; font-family: monospace;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="background:${badgeColor}; color:#ffffff; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;">${typeLabel}</span>
-          <span style="color: var(--text-muted); font-size: 11px;">🕒 ${log.timestamp}</span>
+          <span style="color: var(--text-muted); font-size: 11px;">Time: ${log.timestamp}</span>
         </div>
         <div style="color: ${isError ? '#f87171' : '#4ade80'}; font-weight: 600; margin-bottom: 4px;">${escapeHtml(log.summary)}</div>
-        <div style="color: var(--text-muted); font-size: 11px;">📁 Projects Directory: <span style="color:#ffffff;">${escapeHtml(log.targetPath)}</span></div>
-        <div style="color: var(--text-muted); font-size: 11px;">⚙️ Gemini Config Directory: <span style="color:#ffffff;">${escapeHtml(log.configPath)}</span></div>
-        <div style="margin-top: 6px; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 4px; font-size: 11px; color: var(--accent-blue);">
-          📄 Synced Config Files: AGENTS.md (Global Rules), mcp_config.json (Tools), projects/*.json (Manifests)
+        <div style="color: var(--text-muted); font-size: 11px;">Projects Directory: <span style="color:#ffffff;">${escapeHtml(log.targetPath)}</span></div>
+        <div style="color: var(--text-muted); font-size: 11px;">Config Directory: <span style="color:#ffffff;">${escapeHtml(log.configPath)}</span></div>
+        <div style="margin-top: 6px; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 4px; font-size: 11px; color: #60a5fa;">
+          Synced Config Files: AGENTS.md (Global Rules), mcp_config.json (Tools), projects/*.json (Manifests)
         </div>
       </div>
     `;
