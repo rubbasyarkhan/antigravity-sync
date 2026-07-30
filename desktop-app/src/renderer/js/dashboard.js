@@ -1,5 +1,5 @@
 /**
- * Dashboard & Project List Rendering Engine with Real-Time Search Filtering
+ * Dashboard & Project List Rendering Engine with Real-Time Search, Personal Toggles & Progress Bar
  */
 let searchQuery = '';
 
@@ -11,13 +11,28 @@ document.addEventListener('DOMContentLoaded', () => {
       renderProjects();
     });
   }
+
+  const btnSetupMain = document.getElementById('btn-setup-machine-main');
+  if (btnSetupMain) {
+    btnSetupMain.addEventListener('click', handleSetupMachine);
+  }
+
+  const btnProgressClose = document.getElementById('btn-progress-close');
+  if (btnProgressClose) {
+    btnProgressClose.addEventListener('click', () => {
+      document.getElementById('modal-progress').classList.add('hidden');
+      if (window.electronAPI) {
+        window.electronAPI.openFolder('~/Documents/Projects/');
+      }
+    });
+  }
 });
 
 function renderProjects() {
   const companyContainer = document.getElementById('company-projects-list');
   const personalContainer = document.getElementById('personal-projects-list');
 
-  if (!state.workspace) return;
+  if (!state || !state.workspace) return;
 
   let assigned = state.workspace.assigned_projects || [];
   let personal = state.workspace.personal_repos || [];
@@ -38,17 +53,17 @@ function renderProjects() {
     );
   }
 
-  // 1. Render Company Assigned Projects
+  // 1. Render Company Assigned Projects (With Toggle Switches)
   if (assigned.length === 0) {
     companyContainer.innerHTML = `<div class="empty-state">${
       searchQuery
         ? `No company projects match "${escapeHtml(searchQuery)}".`
-        : `No company projects assigned to @${state.user.github_login} yet.`
+        : `No company projects assigned to @${state.user ? state.user.github_login : ''} yet.`
     }</div>`;
   } else {
     companyContainer.innerHTML = assigned
       .map((proj) => {
-        const isEnabled = state.enabledSlugs.has(proj.slug) || state.enabledSlugs.size === 0;
+        const isEnabled = state.enabledSlugs ? state.enabledSlugs.has(proj.slug) : false;
         return `
         <div class="project-card">
           <div class="project-details">
@@ -56,23 +71,16 @@ function renderProjects() {
             <p>${escapeHtml(proj.description || 'No description')} • <span class="team-tag">${escapeHtml(proj.team || 'General')}</span></p>
           </div>
           <label class="switch">
-            <input type="checkbox" data-slug="${proj.slug}" ${isEnabled ? 'checked' : ''} onchange="handleToggleChange(this)">
+            <input type="checkbox" data-type="company" data-slug="${proj.slug}" ${isEnabled ? 'checked' : ''} onchange="handleToggleChange(this)">
             <span class="slider"></span>
           </label>
         </div>
       `;
       })
       .join('');
-
-    // Append Setup Machine button
-    companyContainer.innerHTML += `
-      <button class="btn-primary" style="margin-top:16px" onclick="handleSetupMachine()">
-        🚀 Set Up My Machine
-      </button>
-    `;
   }
 
-  // 2. Render Personal Projects
+  // 2. Render Personal Projects (With Toggle Switches & Share Button)
   if (personal.length === 0) {
     personalContainer.innerHTML = `<div class="empty-state">${
       searchQuery
@@ -81,27 +89,47 @@ function renderProjects() {
     }</div>`;
   } else {
     personalContainer.innerHTML = personal
-      .map(
-        (proj) => `
+      .map((proj) => {
+        const slug = proj.slug || proj.name;
+        const isEnabled = state.enabledPersonalSlugs ? state.enabledPersonalSlugs.has(slug) : false;
+        return `
         <div class="project-card">
           <div class="project-details">
             <h4>${escapeHtml(proj.name)}</h4>
             <p>Personal Project • ${escapeHtml(proj.repo_url)}</p>
           </div>
-          <button class="btn-secondary" onclick="openShareModal('${proj.slug}', '${proj.repo_url}')">👥 Share</button>
+          <div style="display:flex; align-items:center; gap:12px">
+            <button class="btn-secondary" onclick="openShareModal('${slug}', '${proj.repo_url}')">👥 Share</button>
+            <label class="switch">
+              <input type="checkbox" data-type="personal" data-slug="${slug}" ${isEnabled ? 'checked' : ''} onchange="handleToggleChange(this)">
+              <span class="slider"></span>
+            </label>
+          </div>
         </div>
-      `
-      )
+      `;
+      })
       .join('');
   }
 }
 
 async function handleToggleChange(checkbox) {
   const slug = checkbox.dataset.slug;
-  if (checkbox.checked) {
-    state.enabledSlugs.add(slug);
+  const type = checkbox.dataset.type;
+
+  if (type === 'personal') {
+    if (!state.enabledPersonalSlugs) state.enabledPersonalSlugs = new Set();
+    if (checkbox.checked) {
+      state.enabledPersonalSlugs.add(slug);
+    } else {
+      state.enabledPersonalSlugs.delete(slug);
+    }
   } else {
-    state.enabledSlugs.delete(slug);
+    if (!state.enabledSlugs) state.enabledSlugs = new Set();
+    if (checkbox.checked) {
+      state.enabledSlugs.add(slug);
+    } else {
+      state.enabledSlugs.delete(slug);
+    }
   }
 
   // Persist updated toggles to sync server
@@ -114,7 +142,7 @@ async function handleToggleChange(checkbox) {
       },
       body: JSON.stringify({
         enabled_slugs: Array.from(state.enabledSlugs),
-        personal_repos: state.workspace.personal_repos || [],
+        personal_repos: state.workspace ? (state.workspace.personal_repos || []) : [],
       }),
     });
   } catch (err) {
@@ -123,19 +151,84 @@ async function handleToggleChange(checkbox) {
 }
 
 async function handleSetupMachine() {
-  const assigned = state.workspace.assigned_projects || [];
-  const selectedProjects = assigned.filter(
-    (p) => state.enabledSlugs.has(p.slug) || state.enabledSlugs.size === 0
+  const assigned = state.workspace ? (state.workspace.assigned_projects || []) : [];
+  const personal = state.workspace ? (state.workspace.personal_repos || []) : [];
+
+  const selectedCompany = assigned.filter(
+    (p) => state.enabledSlugs && state.enabledSlugs.has(p.slug)
   );
 
-  if (selectedProjects.length === 0) {
-    alert('Please enable at least one project to set up your machine.');
+  const selectedPersonal = personal.filter(
+    (p) => state.enabledPersonalSlugs && state.enabledPersonalSlugs.has(p.slug || p.name)
+  );
+
+  const allSelected = [...selectedCompany, ...selectedPersonal];
+
+  if (allSelected.length === 0) {
+    alert('Please toggle ON at least one project to set up your machine.');
     return;
   }
 
+  // Open Progress Modal Overlay
+  const modalProgress = document.getElementById('modal-progress');
+  const progressBarFill = document.getElementById('progress-bar-fill');
+  const progressStepText = document.getElementById('progress-step-text');
+  const progressLogList = document.getElementById('progress-log-list');
+  const btnProgressClose = document.getElementById('btn-progress-close');
+
+  modalProgress.classList.remove('hidden');
+  btnProgressClose.classList.add('hidden');
+  progressBarFill.style.width = '5%';
+  progressStepText.textContent = '⚡ Initializing setup engine...';
+  progressLogList.innerHTML = '<div>> Target directory: Documents/Projects/</div>';
+
   if (window.electronAPI) {
-    const res = await window.electronAPI.setupMachine(selectedProjects, state.workspace);
-    alert(`🎉 Setup complete! ${selectedProjects.length} project(s) provisioned into ~/Projects/ and ~/.gemini/config/`);
+    try {
+      let completedCount = 0;
+
+      for (let i = 0; i < allSelected.length; i++) {
+        const proj = allSelected[i];
+        const pct = Math.round(((i + 1) / allSelected.length) * 90);
+        progressBarFill.style.width = `${pct}%`;
+
+        progressStepText.textContent = `📦 Processing (${i + 1}/${allSelected.length}): ${proj.name}...`;
+
+        // Execute Git operation (clones if new, pulls if already exists in Documents/Projects/)
+        const result = await window.electronAPI.cloneProject(proj.repo_url, proj.name);
+        completedCount++;
+
+        const resItem = result && result[0] ? result[0] : { status: 'done' };
+        const isUpdate = resItem.status === 'pulled';
+        const isError = resItem.status === 'error';
+
+        const statusIcon = isError ? '❌' : isUpdate ? '🔄' : '✅';
+        const statusMsg = isError
+          ? `Error: ${resItem.error}`
+          : isUpdate
+          ? `Already cloned — updated in Documents/Projects/${proj.name}`
+          : `Initialized in Documents/Projects/${proj.name}`;
+
+        progressLogList.innerHTML += `<div style="color:${isError ? '#f87171' : isUpdate ? '#60a5fa' : '#4ade80'}">${statusIcon} ${proj.name}: ${statusMsg}</div>`;
+        progressLogList.scrollTop = progressLogList.scrollHeight;
+      }
+
+      // Provision ~/.gemini/config/
+      progressBarFill.style.width = '100%';
+      progressStepText.textContent = '✅ Provisioning ~/.gemini/config/ rules & manifests...';
+      await window.electronAPI.setupMachine(allSelected, state.workspace);
+
+      progressStepText.textContent = '🎉 All selected projects set up successfully!';
+      progressLogList.innerHTML += `<div style="color:#4ade80; font-weight:bold; margin-top:8px">> Setup complete! ${completedCount} project(s) ready in Documents/Projects/</div>`;
+      progressLogList.innerHTML += `<div style="color:#60a5fa">> Rules & manifests written to ~/.gemini/config/</div>`;
+      btnProgressClose.classList.remove('hidden');
+
+      renderProjects();
+    } catch (err) {
+      console.error('Setup machine error:', err);
+      progressStepText.textContent = '❌ Setup encountered an error.';
+      progressLogList.innerHTML += `<div style="color:#f87171">> Error: ${err.message}</div>`;
+      btnProgressClose.classList.remove('hidden');
+    }
   }
 }
 
