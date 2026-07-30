@@ -1,34 +1,17 @@
 /**
- * Git engine module — executes non-blocking repository cloning & pulling with OS permission fallback
+ * Git engine module — executes non-blocking repository cloning & pulling into ~/Projects/
  */
 const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-function getProjectsDir() {
-  const primaryDir = path.join(os.homedir(), 'Documents', 'Projects');
-  const fallbackDir = path.join(os.homedir(), 'Projects');
+const PROJECTS_DIR = path.join(os.homedir(), 'Projects');
 
-  try {
-    if (!fs.existsSync(primaryDir)) {
-      fs.mkdirSync(primaryDir, { recursive: true });
-    }
-    // Test write permission
-    const testFile = path.join(primaryDir, '.perm_test');
-    fs.writeFileSync(testFile, 'test');
-    fs.unlinkSync(testFile);
-    return primaryDir;
-  } catch (err) {
-    console.warn('Documents/Projects directory is protected by Windows OS. Falling back to ~/Projects/:', err.message);
-    if (!fs.existsSync(fallbackDir)) {
-      fs.mkdirSync(fallbackDir, { recursive: true });
-    }
-    return fallbackDir;
-  }
+// Ensure ~/Projects/ root directory exists
+if (!fs.existsSync(PROJECTS_DIR)) {
+  fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 }
-
-const PROJECTS_DIR = getProjectsDir();
 
 /**
  * Executes a git command asynchronously in a spawned child process without blocking Electron UI
@@ -60,11 +43,10 @@ function runGitCmd(args, cwd) {
  */
 async function cloneProjects(projects, onProgress = () => {}) {
   const results = [];
-  const targetRoot = getProjectsDir();
 
   for (let i = 0; i < projects.length; i++) {
     const project = projects[i];
-    const targetDir = path.join(targetRoot, project.name);
+    const targetDir = path.join(PROJECTS_DIR, project.name);
 
     // Yield to Electron OS event loop
     await new Promise((r) => setTimeout(r, 100));
@@ -73,15 +55,15 @@ async function cloneProjects(projects, onProgress = () => {}) {
       if (fs.existsSync(path.join(targetDir, '.git'))) {
         onProgress(project.name, 'pulling', i + 1, projects.length);
         await runGitCmd(['pull'], targetDir);
-        results.push({ name: project.name, status: 'pulled', path: targetDir, message: `Updated project in ${targetRoot}` });
+        results.push({ name: project.name, status: 'pulled', path: targetDir, message: `Updated project in ${PROJECTS_DIR}` });
         onProgress(project.name, 'done', i + 1, projects.length);
       } else {
         onProgress(project.name, 'cloning', i + 1, projects.length);
         if (!fs.existsSync(targetDir)) {
           fs.mkdirSync(targetDir, { recursive: true });
         }
-        await runGitCmd(['clone', project.repo_url, targetDir], targetRoot);
-        results.push({ name: project.name, status: 'cloned', path: targetDir, message: `Initialized project in ${targetRoot}` });
+        await runGitCmd(['clone', project.repo_url, targetDir], PROJECTS_DIR);
+        results.push({ name: project.name, status: 'cloned', path: targetDir, message: `Initialized project in ${PROJECTS_DIR}` });
         onProgress(project.name, 'done', i + 1, projects.length);
       }
     } catch (err) {
@@ -100,15 +82,14 @@ async function cloneProjects(projects, onProgress = () => {}) {
  * Run git fetch on all cloned projects asynchronously
  */
 async function fetchAllProjects() {
-  const targetRoot = getProjectsDir();
-  if (!fs.existsSync(targetRoot)) return [];
+  if (!fs.existsSync(PROJECTS_DIR)) return [];
 
-  const items = fs.readdirSync(targetRoot, { withFileTypes: true });
+  const items = fs.readdirSync(PROJECTS_DIR, { withFileTypes: true });
   const results = [];
 
   for (const item of items) {
     if (item.isDirectory()) {
-      const targetDir = path.join(targetRoot, item.name);
+      const targetDir = path.join(PROJECTS_DIR, item.name);
       if (fs.existsSync(path.join(targetDir, '.git'))) {
         try {
           await runGitCmd(['fetch'], targetDir);

@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
+const os = require('os');
 
 const { startGitHubLogin } = require('./auth');
 const { saveToken, getToken, clearToken } = require('./keychain');
