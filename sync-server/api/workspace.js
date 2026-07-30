@@ -29,57 +29,72 @@ router.get('/', requireAuth, async (req, res) => {
       };
 
       try {
-        // 2a. Fetch ALL repositories (owner, collaborator, organization member)
-        const ghRes = await fetch('https://api.github.com/user/repos?affiliation=owner,collaborator,organization_member&per_page=100&sort=updated', { headers });
-
-        if (ghRes.ok) {
-          const repos = await ghRes.json();
-
-          repos.forEach((repo) => {
-            const isOrg = repo.owner && (
-              repo.owner.type === 'Organization' ||
-              repo.owner.login.toLowerCase() !== github_login.toLowerCase()
-            );
-
-            if (isOrg) {
-              ghAssignedProjects.push({
-                slug: repo.name,
-                name: repo.name,
-                description: repo.description || `Repository from ${repo.owner.login}`,
-                repo_url: repo.clone_url || repo.html_url,
-                team: repo.owner.login,
-              });
-            } else {
-              ghPersonalProjects.push({
-                slug: repo.name,
-                name: repo.name,
-                repo_url: repo.clone_url || repo.html_url,
-              });
-            }
-          });
+        // 2a. Fetch ALL repository pages (owner, collaborator, organization_member) up to 500 repos
+        let allRepos = [];
+        for (let page = 1; page <= 5; page++) {
+          const ghRes = await fetch(`https://api.github.com/user/repos?affiliation=owner,collaborator,organization_member&per_page=100&page=${page}&sort=updated`, { headers });
+          if (ghRes.ok) {
+            const pageRepos = await ghRes.json();
+            if (!Array.isArray(pageRepos) || pageRepos.length === 0) break;
+            allRepos = allRepos.concat(pageRepos);
+            if (pageRepos.length < 100) break;
+          } else {
+            break;
+          }
         }
 
-        // 2b. Fetch ALL Organizations the user belongs to
+        allRepos.forEach((repo) => {
+          const isOrg = repo.owner && (
+            repo.owner.type === 'Organization' ||
+            repo.owner.login.toLowerCase() !== github_login.toLowerCase()
+          );
+
+          if (isOrg) {
+            ghAssignedProjects.push({
+              slug: repo.name,
+              name: repo.name,
+              description: repo.description || `Repository from ${repo.owner.login}`,
+              repo_url: repo.clone_url || repo.html_url,
+              team: repo.owner.login,
+            });
+          } else {
+            ghPersonalProjects.push({
+              slug: repo.name,
+              name: repo.name,
+              repo_url: repo.clone_url || repo.html_url,
+            });
+          }
+        });
+
+        // 2b. Fetch ALL Organizations the user belongs to and iterate their repos
         const orgsRes = await fetch('https://api.github.com/user/orgs?per_page=100', { headers });
         if (orgsRes.ok) {
           const orgs = await orgsRes.json();
 
           for (const org of orgs) {
             try {
-              const orgReposRes = await fetch(`https://api.github.com/orgs/${org.login}/repos?per_page=100&sort=updated`, { headers });
-              if (orgReposRes.ok) {
-                const orgRepos = await orgReposRes.json();
-                orgRepos.forEach((repo) => {
-                  if (!ghAssignedProjects.some((p) => p.slug.toLowerCase() === repo.name.toLowerCase() || p.repo_url === (repo.clone_url || repo.html_url))) {
-                    ghAssignedProjects.push({
-                      slug: repo.name,
-                      name: repo.name,
-                      description: repo.description || `Organization repository from ${org.login}`,
-                      repo_url: repo.clone_url || repo.html_url,
-                      team: org.login,
-                    });
-                  }
-                });
+              for (let page = 1; page <= 3; page++) {
+                const orgReposRes = await fetch(`https://api.github.com/orgs/${org.login}/repos?per_page=100&page=${page}&sort=updated`, { headers });
+                if (orgReposRes.ok) {
+                  const orgRepos = await orgReposRes.json();
+                  if (!Array.isArray(orgRepos) || orgRepos.length === 0) break;
+
+                  orgRepos.forEach((repo) => {
+                    if (!ghAssignedProjects.some((p) => p.slug.toLowerCase() === repo.name.toLowerCase() || p.repo_url === (repo.clone_url || repo.html_url))) {
+                      ghAssignedProjects.push({
+                        slug: repo.name,
+                        name: repo.name,
+                        description: repo.description || `Organization repository from ${org.login}`,
+                        repo_url: repo.clone_url || repo.html_url,
+                        team: org.login,
+                      });
+                    }
+                  });
+
+                  if (orgRepos.length < 100) break;
+                } else {
+                  break;
+                }
               }
             } catch (orgRepoErr) {
               console.warn(`Could not fetch repos for org ${org.login}:`, orgRepoErr.message);

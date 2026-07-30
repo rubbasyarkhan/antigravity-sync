@@ -75,9 +75,14 @@
 
       <!-- Projects Tab -->
       <div id="tab-projects" class="tab-content active">
-        <div class="tab-header">
+        <div class="tab-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
           <h2>My Projects</h2>
-          <button id="btn-sync-now" class="btn-secondary">🔄 Sync Now</button>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btn-setup-machine-main" class="btn-primary" style="padding: 8px 16px; font-size: 13px;">
+              🚀 Set Up My Machine
+            </button>
+            <button id="btn-sync-now" class="btn-secondary">🔄 Sync Now</button>
+          </div>
         </div>
 
         <div class="search-bar-container" style="margin-bottom: 20px;">
@@ -89,20 +94,17 @@
           <div id="company-projects-list" class="project-list">
             <div class="loading-state">Loading assigned projects...</div>
           </div>
+          <div id="company-pagination" class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;"></div>
         </section>
 
-        <section class="project-section">
+        <section class="project-section" style="margin-top: 24px;">
           <h3 class="section-title">👤 Personal Projects</h3>
           <div id="personal-projects-list" class="project-list">
             <div class="empty-state">No personal projects yet.</div>
           </div>
-          <button id="btn-add-personal" class="btn-ghost">+ Add Custom Personal Project</button>
+          <div id="personal-pagination" class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;"></div>
+          <button id="btn-add-personal" class="btn-ghost" style="margin-top: 12px;">+ Add Custom Personal Project</button>
         </section>
-
-        <!-- Main Machine Setup Trigger -->
-        <button id="btn-setup-machine-main" class="btn-primary" style="margin-top: 24px; padding: 14px 24px; font-size: 16px; width: 100%;">
-          🚀 Set Up My Machine (Provision Projects to Documents/Projects/)
-        </button>
       </div>
 
       <!-- Notifications Tab -->

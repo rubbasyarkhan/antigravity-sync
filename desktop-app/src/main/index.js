@@ -103,9 +103,18 @@ function setupIPC() {
     return { cloneResults, configResult };
   });
 
+  ipcMain.handle('git:checkLocalExist', async (_event, projectName) => {
+    const fs = require('fs');
+    const targetDir = path.join(os.homedir(), 'Documents', 'Projects', projectName);
+    return fs.existsSync(path.join(targetDir, '.git'));
+  });
+
   ipcMain.handle('shell:openFolder', async (_event, folderPath) => {
     if (folderPath) {
-      await shell.openPath(folderPath);
+      const resolvedPath = folderPath.startsWith('~')
+        ? path.join(os.homedir(), folderPath.slice(1))
+        : folderPath;
+      await shell.openPath(resolvedPath);
     }
   });
 }

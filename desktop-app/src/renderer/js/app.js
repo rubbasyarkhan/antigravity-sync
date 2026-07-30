@@ -103,7 +103,7 @@ function setupEventListeners() {
 
   btnOpenFolder.addEventListener('click', () => {
     if (window.electronAPI) {
-      window.electronAPI.openFolder('~/Projects/');
+      window.electronAPI.openFolder('~/Documents/Projects/');
     }
   });
 }

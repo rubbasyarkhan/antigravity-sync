@@ -1,13 +1,19 @@
 /**
- * Dashboard & Project List Rendering Engine with Real-Time Search & Progress Overlay
+ * Dashboard & Project List Rendering Engine with Real-Time Search, Pagination & Local Cloned Check
  */
 let searchQuery = '';
+let companyPage = 1;
+let personalPage = 1;
+const ITEMS_PER_PAGE = 6;
+const localClonedMap = new Map(); // Cache local existence check per project
 
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('project-search-input');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value.trim().toLowerCase();
+      companyPage = 1;
+      personalPage = 1;
       renderProjects();
     });
   }
@@ -28,14 +34,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function renderProjects() {
+async function checkProjectLocalStatus(projects = []) {
+  if (!window.electronAPI || !window.electronAPI.checkLocalExist) return;
+
+  for (const proj of projects) {
+    const name = proj.name;
+    if (!localClonedMap.has(name)) {
+      const exists = await window.electronAPI.checkLocalExist(name);
+      localClonedMap.set(name, exists);
+    }
+  }
+}
+
+async function renderProjects() {
   const companyContainer = document.getElementById('company-projects-list');
   const personalContainer = document.getElementById('personal-projects-list');
+  const companyPagContainer = document.getElementById('company-pagination');
+  const personalPagContainer = document.getElementById('personal-pagination');
 
   if (!state.workspace) return;
 
   let assigned = state.workspace.assigned_projects || [];
   let personal = state.workspace.personal_repos || [];
+
+  // Check local disk status for all loaded projects
+  await checkProjectLocalStatus([...assigned, ...personal]);
 
   // Filter projects based on real-time search query
   if (searchQuery) {
@@ -53,21 +76,33 @@ function renderProjects() {
     );
   }
 
-  // 1. Render Company Assigned Projects
+  // 1. Render Company Assigned Projects (Paginated)
+  const totalCompanyPages = Math.ceil(assigned.length / ITEMS_PER_PAGE) || 1;
+  companyPage = Math.min(companyPage, totalCompanyPages);
+  const startCompany = (companyPage - 1) * ITEMS_PER_PAGE;
+  const paginatedCompany = assigned.slice(startCompany, startCompany + ITEMS_PER_PAGE);
+
   if (assigned.length === 0) {
     companyContainer.innerHTML = `<div class="empty-state">${
       searchQuery
         ? `No company projects match "${escapeHtml(searchQuery)}".`
         : `No company projects assigned to @${state.user.github_login} yet.`
     }</div>`;
+    companyPagContainer.innerHTML = '';
   } else {
-    companyContainer.innerHTML = assigned
+    companyContainer.innerHTML = paginatedCompany
       .map((proj) => {
-        const isEnabled = state.enabledSlugs.has(proj.slug) || state.enabledSlugs.size === 0;
+        // Toggle OFF by default unless explicitly toggled ON
+        const isEnabled = state.enabledSlugs.has(proj.slug);
+        const isCloned = localClonedMap.get(proj.name);
+        const localBadge = isCloned
+          ? `<span class="badge-local" style="background-color: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.4); font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 8px;">✅ Already Cloned</span>`
+          : '';
+
         return `
         <div class="project-card">
           <div class="project-details">
-            <h4>${escapeHtml(proj.name)}</h4>
+            <h4>${escapeHtml(proj.name)} ${localBadge}</h4>
             <p>${escapeHtml(proj.description || 'No description')} • <span class="team-tag">${escapeHtml(proj.team || 'General')}</span></p>
           </div>
           <label class="switch">
@@ -78,24 +113,41 @@ function renderProjects() {
       `;
       })
       .join('');
+
+    renderPaginationControls(companyPagContainer, companyPage, totalCompanyPages, (newPage) => {
+      companyPage = newPage;
+      renderProjects();
+    });
   }
 
-  // 2. Render Personal Projects (with Toggles & Share Buttons)
+  // 2. Render Personal Projects (Paginated)
+  const totalPersonalPages = Math.ceil(personal.length / ITEMS_PER_PAGE) || 1;
+  personalPage = Math.min(personalPage, totalPersonalPages);
+  const startPersonal = (personalPage - 1) * ITEMS_PER_PAGE;
+  const paginatedPersonal = personal.slice(startPersonal, startPersonal + ITEMS_PER_PAGE);
+
   if (personal.length === 0) {
     personalContainer.innerHTML = `<div class="empty-state">${
       searchQuery
         ? `No personal projects match "${escapeHtml(searchQuery)}".`
         : 'No personal projects added.'
     }</div>`;
+    personalPagContainer.innerHTML = '';
   } else {
-    personalContainer.innerHTML = personal
+    personalContainer.innerHTML = paginatedPersonal
       .map((proj) => {
         const slug = proj.slug || proj.name;
-        const isEnabled = state.enabledPersonalSlugs ? (state.enabledPersonalSlugs.has(slug) || state.enabledPersonalSlugs.size === 0) : true;
+        // Toggle OFF by default unless explicitly toggled ON
+        const isEnabled = state.enabledPersonalSlugs ? state.enabledPersonalSlugs.has(slug) : false;
+        const isCloned = localClonedMap.get(proj.name);
+        const localBadge = isCloned
+          ? `<span class="badge-local" style="background-color: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.4); font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 8px;">✅ Already Cloned</span>`
+          : '';
+
         return `
         <div class="project-card">
           <div class="project-details">
-            <h4>${escapeHtml(proj.name)}</h4>
+            <h4>${escapeHtml(proj.name)} ${localBadge}</h4>
             <p>Personal Project • ${escapeHtml(proj.repo_url)}</p>
           </div>
           <div style="display:flex; align-items:center; gap:12px">
@@ -109,6 +161,35 @@ function renderProjects() {
       `;
       })
       .join('');
+
+    renderPaginationControls(personalPagContainer, personalPage, totalPersonalPages, (newPage) => {
+      personalPage = newPage;
+      renderProjects();
+    });
+  }
+}
+
+function renderPaginationControls(container, currentPage, totalPages, onPageChange) {
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = `
+    <button class="btn-secondary" ${currentPage === 1 ? 'disabled style="opacity:0.4; cursor:not-allowed"' : ''} id="btn-prev-${container.id}">◀ Previous</button>
+    <span style="font-size: 13px; color: var(--text-muted);">Page ${currentPage} of ${totalPages}</span>
+    <button class="btn-secondary" ${currentPage === totalPages ? 'disabled style="opacity:0.4; cursor:not-allowed"' : ''} id="btn-next-${container.id}">Next ▶</button>
+  `;
+
+  const btnPrev = document.getElementById(`btn-prev-${container.id}`);
+  const btnNext = document.getElementById(`btn-next-${container.id}`);
+
+  if (btnPrev && currentPage > 1) {
+    btnPrev.onclick = () => onPageChange(currentPage - 1);
+  }
+
+  if (btnNext && currentPage < totalPages) {
+    btnNext.onclick = () => onPageChange(currentPage + 1);
   }
 }
 
@@ -124,6 +205,7 @@ async function handleToggleChange(checkbox) {
       state.enabledPersonalSlugs.delete(slug);
     }
   } else {
+    if (!state.enabledSlugs) state.enabledSlugs = new Set();
     if (checkbox.checked) {
       state.enabledSlugs.add(slug);
     } else {
@@ -154,17 +236,17 @@ async function handleSetupMachine() {
   const personal = state.workspace.personal_repos || [];
 
   const selectedCompany = assigned.filter(
-    (p) => state.enabledSlugs.has(p.slug) || state.enabledSlugs.size === 0
+    (p) => state.enabledSlugs && state.enabledSlugs.has(p.slug)
   );
 
   const selectedPersonal = personal.filter(
-    (p) => !state.enabledPersonalSlugs || state.enabledPersonalSlugs.has(p.slug || p.name) || state.enabledPersonalSlugs.size === 0
+    (p) => state.enabledPersonalSlugs && state.enabledPersonalSlugs.has(p.slug || p.name)
   );
 
   const allSelected = [...selectedCompany, ...selectedPersonal];
 
   if (allSelected.length === 0) {
-    alert('Please enable at least one project to set up your machine.');
+    alert('Please toggle ON at least one project to set up your machine.');
     return;
   }
 
@@ -179,7 +261,7 @@ async function handleSetupMachine() {
   btnProgressClose.classList.add('hidden');
   progressBarFill.style.width = '5%';
   progressStepText.textContent = '⚡ Initializing setup engine...';
-  progressLogList.innerHTML = '<div>> Targeting folder: Documents/Projects/</div>';
+  progressLogList.innerHTML = '<div>> Target directory: Documents/Projects/</div>';
 
   if (window.electronAPI) {
     try {
@@ -204,9 +286,10 @@ async function handleSetupMachine() {
         const statusMsg = isError
           ? `Error: ${resItem.error}`
           : isUpdate
-          ? `Already exists — updated in Documents/Projects/${proj.name}`
+          ? `Already cloned — updated in Documents/Projects/${proj.name}`
           : `Initialized in Documents/Projects/${proj.name}`;
 
+        localClonedMap.set(proj.name, true);
         progressLogList.innerHTML += `<div style="color:${isError ? '#f87171' : isUpdate ? '#60a5fa' : '#4ade80'}">${statusIcon} ${proj.name}: ${statusMsg}</div>`;
         progressLogList.scrollTop = progressLogList.scrollHeight;
       }
@@ -214,11 +297,14 @@ async function handleSetupMachine() {
       // Provision ~/.gemini/config/
       progressBarFill.style.width = '100%';
       progressStepText.textContent = '✅ Provisioning ~/.gemini/config/ rules & manifests...';
-      await window.electronAPI.setupMachine([], state.workspace);
+      await window.electronAPI.setupMachine(allSelected, state.workspace);
 
-      progressStepText.textContent = '🎉 All projects set up successfully!';
+      progressStepText.textContent = '🎉 All selected projects set up successfully!';
       progressLogList.innerHTML += `<div style="color:#4ade80; font-weight:bold; margin-top:8px">> Setup complete! ${completedCount} project(s) ready in Documents/Projects/</div>`;
       btnProgressClose.classList.remove('hidden');
+
+      // Re-render UI to update local badges
+      renderProjects();
     } catch (err) {
       console.error('Setup machine error:', err);
       progressStepText.textContent = '❌ Setup encountered an error.';
