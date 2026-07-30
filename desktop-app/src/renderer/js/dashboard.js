@@ -193,7 +193,10 @@ async function handleSetupMachine() {
 
         progressStepText.textContent = `📦 Processing (${i + 1}/${allSelected.length}): ${proj.name}...`;
 
-        // Execute Git operation (clones if new, pulls if already exists in Documents/Projects/)
+        // Yield UI thread to keep Electron responsive and paint DOM updates
+        await new Promise((r) => setTimeout(r, 50));
+
+        // Execute Git operation
         const result = await window.electronAPI.cloneProject(proj.repo_url, proj.name);
         completedCount++;
 
@@ -205,11 +208,12 @@ async function handleSetupMachine() {
         const statusMsg = isError
           ? `Error: ${resItem.error}`
           : isUpdate
-          ? `Already cloned — updated in Documents/Projects/${proj.name}`
-          : `Initialized in Documents/Projects/${proj.name}`;
+          ? `Already cloned — updated project`
+          : `Initialized new project`;
 
         progressLogList.innerHTML += `<div style="color:${isError ? '#f87171' : isUpdate ? '#60a5fa' : '#4ade80'}">${statusIcon} ${proj.name}: ${statusMsg}</div>`;
         progressLogList.scrollTop = progressLogList.scrollHeight;
+        await new Promise((r) => setTimeout(r, 50));
       }
 
       // Provision ~/.gemini/config/
