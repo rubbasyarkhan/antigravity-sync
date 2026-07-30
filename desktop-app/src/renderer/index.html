@@ -6,58 +6,53 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' http://localhost:3000 https://api.github.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data:;" />
   <title>Antigravity Sync</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
 </head>
 <body>
 
   <!-- ========== LOGIN SCREEN ========== -->
   <div id="screen-login" class="screen active">
-    <div class="login-container">
-      <div class="logo">
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-          <circle cx="24" cy="24" r="24" fill="#238636"/>
-          <path d="M24 8C15.163 8 8 15.163 8 24c0 7.072 4.584 13.072 10.94 15.18.8.146 1.092-.347 1.092-.77 0-.38-.013-1.387-.02-2.722-4.45.967-5.39-2.144-5.39-2.144-.728-1.847-1.776-2.339-1.776-2.339-1.452-.992.11-.972.11-.972 1.605.113 2.45 1.648 2.45 1.648 1.427 2.445 3.743 1.74 4.656 1.33.146-1.034.558-1.74 1.015-2.14-3.554-.404-7.29-1.777-7.29-7.91 0-1.747.624-3.175 1.647-4.295-.165-.403-.714-2.032.157-4.232 0 0 1.343-.43 4.4 1.64A15.32 15.32 0 0124 15.36c1.36.007 2.73.184 4.01.538 3.054-2.07 4.395-1.64 4.395-1.64.873 2.2.324 3.83.16 4.232 1.025 1.12 1.645 2.548 1.645 4.295 0 6.147-3.74 7.503-7.306 7.898.574.496 1.086 1.47 1.086 2.963 0 2.14-.02 3.866-.02 4.393 0 .427.288.924 1.1.768C35.42 37.068 40 31.07 40 24c0-8.837-7.163-16-16-16z" fill="white"/>
-        </svg>
-        <h1>Antigravity Sync</h1>
-        <p>One login. Every project. Every device.</p>
-      </div>
-      <button id="btn-login" class="btn-primary btn-github">
+    <div class="login-card">
+      <div class="logo-badge">⚡</div>
+      <h1>Antigravity Sync</h1>
+      <p>1-Click Developer Machine Setup & Continuous Environment Synchronization</p>
+      
+      <button id="btn-login" class="btn-primary" style="width: 100%; justify-content: center; padding: 14px 24px; font-size: 15px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
           <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
         </svg>
         Sign in with GitHub
       </button>
-      <p class="login-hint">Your GitHub account is your identity. No separate account needed.</p>
+      <p style="font-size: 12px; color: var(--text-muted); margin-top: 20px; margin-bottom: 0;">
+        🔒 Secure OAuth Device Authentication. Runtimes & repositories provisioned automatically.
+      </p>
     </div>
   </div>
 
   <!-- ========== DASHBOARD SCREEN ========== -->
   <div id="screen-dashboard" class="screen">
 
-    <!-- Sidebar -->
+    <!-- Sidebar Navigation -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-          <circle cx="24" cy="24" r="24" fill="#238636"/>
-          <path d="M24 8C15.163 8 8 15.163 8 24c0 7.072 4.584 13.072 10.94 15.18.8.146 1.092-.347 1.092-.77 0-.38-.013-1.387-.02-2.722-4.45.967-5.39-2.144-5.39-2.144-.728-1.847-1.776-2.339-1.776-2.339-1.452-.992.11-.972.11-.972 1.605.113 2.45 1.648 2.45 1.648 1.427 2.445 3.743 1.74 4.656 1.33.146-1.034.558-1.74 1.015-2.14-3.554-.404-7.29-1.777-7.29-7.91 0-1.747.624-3.175 1.647-4.295-.165-.403-.714-2.032.157-4.232 0 0 1.343-.43 4.4 1.64A15.32 15.32 0 0124 15.36c1.36.007 2.73.184 4.01.538 3.054-2.07 4.395-1.64 4.395-1.64.873 2.2.324 3.83.16 4.232 1.025 1.12 1.645 2.548 1.645 4.295 0 6.147-3.74 7.503-7.306 7.898.574.496 1.086 1.47 1.086 2.963 0 2.14-.02 3.866-.02 4.393 0 .427.288.924 1.1.768C35.42 37.068 40 31.07 40 24c0-8.837-7.163-16-16-16z" fill="white"/>
-        </svg>
+        <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">⚡</div>
         <span>Antigravity Sync</span>
       </div>
 
       <nav class="sidebar-nav">
         <button class="nav-item active" data-tab="projects">
-          <span class="nav-icon">📦</span> Projects
+          <span>📦</span> My Projects
         </button>
         <button class="nav-item" data-tab="notifications">
-          <span class="nav-icon">🔔</span> Notifications
+          <span>🔔</span> Notifications
           <span id="invite-badge" class="badge hidden">0</span>
         </button>
         <button class="nav-item" data-tab="sync">
-          <span class="nav-icon">🔄</span> Sync Status
+          <span>🔄</span> Sync Status
         </button>
         <button class="nav-item" data-tab="settings">
-          <span class="nav-icon">⚙️</span> Settings
+          <span>⚙️</span> Settings
         </button>
       </nav>
 
@@ -70,46 +65,51 @@
       </div>
     </aside>
 
-    <!-- Main content area -->
+    <!-- Main Content View -->
     <main class="main-content">
 
       <!-- Projects Tab -->
       <div id="tab-projects" class="tab-content active">
-        <div class="tab-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h2>My Projects</h2>
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <button id="btn-setup-machine-main" class="btn-primary" style="padding: 8px 16px; font-size: 13px;">
-              🚀 Set Up My Machine
+        <div class="tab-header">
+          <div>
+            <h2>My Projects</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Toggle ON the repositories you want on this computer and click setup.</p>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <button id="btn-setup-machine-main" class="btn-setup-hero">
+              🚀 Set Up My Machine (1-Click)
             </button>
             <button id="btn-sync-now" class="btn-secondary">🔄 Sync Now</button>
           </div>
         </div>
 
-        <div class="search-bar-container" style="margin-bottom: 20px;">
-          <input id="project-search-input" type="text" placeholder="🔍 Search projects by name or team..." class="input" style="margin-bottom: 0;" />
+        <!-- Real-Time Search Bar -->
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input id="project-search-input" type="text" placeholder="Search projects by name, description, or team..." class="search-input" />
         </div>
 
         <section class="project-section">
-          <h3 class="section-title">🏢 Company Assigned</h3>
+          <h3 class="section-title">🏢 Company Assigned Repositories</h3>
           <div id="company-projects-list" class="project-list">
-            <div class="loading-state">Loading assigned projects...</div>
+            <div class="empty-state">Loading assigned projects...</div>
           </div>
         </section>
 
-        <section class="project-section" style="margin-top: 24px;">
-          <h3 class="section-title">👤 Personal Projects</h3>
+        <section class="project-section">
+          <h3 class="section-title">👤 Personal Repositories</h3>
           <div id="personal-projects-list" class="project-list">
-            <div class="empty-state">No personal projects yet.</div>
+            <div class="empty-state">No personal projects added yet.</div>
           </div>
-          <button id="btn-add-personal" class="btn-ghost" style="margin-top: 12px;">+ Add Personal Project</button>
+          <button id="btn-add-personal" class="btn-secondary" style="margin-top: 14px;">+ Add Personal Repository</button>
         </section>
       </div>
 
       <!-- Notifications Tab -->
       <div id="tab-notifications" class="tab-content">
-        <div class="tab-header"><h2>Notifications</h2></div>
-        <div id="invites-list" class="invites-list">
-          <div class="empty-state">No pending invitations.</div>
+        <div class="tab-header"><h2>Notifications & Invitations</h2></div>
+        <div id="invites-list" class="project-list">
+          <div class="empty-state">No pending project invitations.</div>
         </div>
       </div>
 
@@ -118,23 +118,23 @@
         <div class="tab-header"><h2>Sync Status & Activity Logs</h2></div>
         <div class="sync-status-card">
           <div class="sync-row">
-            <span>Status</span>
+            <span>Background Sync Status</span>
             <span id="sync-status-label" class="status-badge synced">Synced</span>
           </div>
           <div class="sync-row">
-            <span>Last sync</span>
-            <span id="sync-last-time">Never</span>
+            <span>Last Sync Execution</span>
+            <span id="sync-last-time">Just Now</span>
           </div>
           <div class="sync-row">
-            <span>Next sync</span>
+            <span>Automatic Sync Schedule</span>
             <span>Every 15 minutes</span>
           </div>
-          <button id="btn-sync-now-2" class="btn-primary" style="margin-top:16px">🔄 Sync Now</button>
+          <button id="btn-sync-now-2" class="btn-primary" style="margin-top: 18px; width: 100%;">🔄 Trigger Instant Sync Now</button>
         </div>
 
-        <section class="project-section" style="margin-top: 24px;">
-          <h3 class="section-title">📋 Sync History & Activity Logs</h3>
-          <div id="sync-activity-logs" style="background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; max-height: 280px; overflow-y: auto;">
+        <section class="project-section" style="margin-top: 32px;">
+          <h3 class="section-title">📋 Sync History & Activity Log Stream</h3>
+          <div id="sync-activity-logs" class="log-box" style="max-height: 300px;">
             <div class="empty-state">No sync activity logged yet.</div>
           </div>
         </section>
@@ -146,62 +146,61 @@
         <div class="settings-card">
           <div class="setting-row">
             <div>
-              <strong>GitHub Account</strong>
-              <p id="settings-login">@username</p>
+              <strong style="color: var(--text-heading);">GitHub Account Identity</strong>
+              <p id="settings-login" style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">@username</p>
             </div>
           </div>
           <div class="setting-row">
             <div>
-              <strong>Projects Folder Target</strong>
-              <p id="settings-projects-path">Documents/Projects/</p>
+              <strong style="color: var(--text-heading);">Target Local Projects Folder</strong>
+              <p id="settings-projects-path" style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">~/Projects/</p>
             </div>
-            <button class="btn-ghost" id="btn-open-folder">Open Folder</button>
+            <button class="btn-secondary" id="btn-open-folder">Open Folder</button>
           </div>
-          <hr class="divider" style="margin: 16px 0; border-color: var(--border-color);" />
-          <button id="btn-logout" class="btn-danger">Sign Out</button>
+          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+            <button id="btn-logout" class="btn-danger">Sign Out of Antigravity Sync</button>
+          </div>
         </div>
       </div>
 
     </main>
   </div>
 
-  <!-- Share Modal -->
+  <!-- Share Project Modal -->
   <div id="modal-share" class="modal hidden">
     <div class="modal-content">
-      <h3>Share Project</h3>
+      <h3 class="modal-title">Share Project</h3>
       <p id="modal-share-project-name" class="modal-subtitle"></p>
-      <input id="share-username-input" type="text" placeholder="Enter GitHub username (e.g. @frienddev)" class="input" />
-      <div class="modal-actions">
-        <button id="btn-share-cancel" class="btn-ghost">Cancel</button>
-        <button id="btn-share-send" class="btn-primary">Send Invite</button>
+      <input id="share-username-input" type="text" placeholder="Enter GitHub username (e.g. @frienddev)" class="search-input" style="margin-bottom: 20px; padding-left: 16px;" />
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <button id="btn-share-cancel" class="btn-secondary">Cancel</button>
+        <button id="btn-share-send" class="btn-primary">Send Invitation</button>
       </div>
     </div>
   </div>
 
-  <!-- Progress Overlay Modal -->
+  <!-- Real-Time Progress Overlay Modal -->
   <div id="modal-progress" class="modal hidden">
-    <div class="modal-content" style="width: 480px; text-align: center;">
-      <h3 id="progress-title" style="color: #ffffff; font-size: 18px; margin-bottom: 8px;">🚀 Setting Up Your Machine...</h3>
-      <p id="progress-subtitle" style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Provisioning selected projects into Documents/Projects/</p>
+    <div class="modal-content">
+      <h3 id="progress-title" class="modal-title" style="text-align: center;">🚀 Setting Up Your Machine...</h3>
+      <p id="progress-subtitle" class="modal-subtitle" style="text-align: center;">Provisioning selected repositories into ~/Projects/</p>
 
-      <!-- Progress Track Bar -->
-      <div style="background-color: var(--bg-dark); border-radius: 10px; height: 10px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--border-color);">
-        <div id="progress-bar-fill" style="background: linear-gradient(90deg, #22c55e 0%, #3b82f6 100%); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+      <div class="progress-bar-bg">
+        <div id="progress-bar-fill" class="progress-bar-fill"></div>
       </div>
 
-      <div id="progress-step-text" style="font-size: 13px; font-weight: 600; color: var(--accent-blue); margin-bottom: 16px;">Initializing...</div>
+      <div id="progress-step-text" style="font-size: 13px; font-weight: 600; color: var(--blue-main); text-align: center; margin-bottom: 18px;">Initializing...</div>
 
-      <!-- Detailed Results Log List -->
-      <div id="progress-log-list" style="background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; max-height: 140px; overflow-y: auto; text-align: left; font-size: 12px; font-family: monospace; margin-bottom: 20px;">
+      <div id="progress-log-list" class="log-box">
       </div>
 
       <button id="btn-progress-close" class="btn-primary hidden" style="width: 100%;">
-        ✅ Done — Open Projects Folder
+        ✅ Setup Complete — Open Projects Folder
       </button>
     </div>
   </div>
 
-  <!-- Script Includes -->
+  <!-- Renderer Scripts -->
   <script src="js/dashboard.js"></script>
   <script src="js/share.js"></script>
   <script src="js/app.js"></script>
