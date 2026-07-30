@@ -16,7 +16,7 @@ const SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 Minutes
 let syncTimer = null;
 let currentToken = null;
 let isSyncing = false;
-const syncLogs = []; // In-memory activity log store (max 50)
+const syncLogs = []; // In-memory activity log store
 
 function sendToRenderer(channel, data) {
   BrowserWindow.getAllWindows().forEach((win) => {
@@ -34,7 +34,7 @@ function addSetupLogEntry(selectedProjects = [], writtenFiles = []) {
   const timestampDisplay = new Date().toLocaleString();
   const timestampIso = new Date().toISOString();
 
-  const projectNames = selectedProjects.map((p) => p.name).join(', ') || 'Global Rules';
+  const projectNames = selectedProjects.map((p) => p.name).join(', ') || 'Global Rules Only';
 
   const logEntry = {
     id: Date.now() + Math.random().toString(36).substr(2, 4),
@@ -47,7 +47,7 @@ function addSetupLogEntry(selectedProjects = [], writtenFiles = []) {
     companyCount: selectedProjects.filter((p) => p.team && p.team !== 'Personal').length,
     personalCount: selectedProjects.filter((p) => !p.team || p.team === 'Personal').length,
     inviteCount: 0,
-    summary: `Set up ${selectedProjects.length} selected project(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`,
+    summary: `Set up ${selectedProjects.length} enabled repo(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`,
     syncedFiles: writtenFiles.map((f) => ({
       path: f.file,
       name: path.basename(f.file),
@@ -116,14 +116,14 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)', activeProje
       activeProjects = [...activeAssigned, ...activePersonal];
     }
 
-    // 4. Always provision ~/.gemini/config/ files on every sync execution
+    // 4. ALWAYS provision ~/.gemini/config/ rules & workspace manifests on EVERY sync execution
     const configRes = writeAntigravityConfig(workspace, activeProjects);
     const writtenFiles = configRes ? configRes.writtenFiles || [] : [];
 
     const projectNames = activeProjects.map((p) => p.name).join(', ');
 
     const activeSummary = activeProjects.length > 0
-      ? `Synced ${activeProjects.length} enabled project(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`
+      ? `Synced ${activeProjects.length} enabled repo(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`
       : `Provisioned ${writtenFiles.length} global config file(s) (AGENTS.md, mcp_config.json) & verified workspace state`;
 
     const logEntry = {
@@ -182,7 +182,7 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)', activeProje
 
 function startSyncEngine(token) {
   currentToken = token;
-  // Wipe stale in-memory logs on initial login session start
+  // Clear any old/stale logs from previous sessions
   syncLogs.length = 0;
   performSync('Automatic (Initial Auth Sync)');
 

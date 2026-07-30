@@ -13,9 +13,12 @@ Antigravity Sync is an enterprise-grade workspace synchronization platform power
 - **🏢 Scoped Company Project Assignments**: Developers only see company projects assigned to their GitHub handle or team. Unassigned projects remain hidden.
 - **👤 Personal Projects & Email Sharing**: Developers can import personal projects and share them with any GitHub handle (`@username`) with a single click.
 - **⚡ 1-Click Multi-Device Auto-Sync**: Logging into a secondary device (e.g. Home Laptop) automatically restores all assigned company projects, personal projects, files, rules, and settings without re-selection.
-- **📁 Automated File & Config Provisioning**: Clones/pulls repositories into `~/Projects/` using Git and populates `~/.gemini/config/` (AGENTS.md, skills, plugins, MCP servers, and project UUID manifests).
+- **📁 Automated File & Config Provisioning**: Clones/pulls repositories into `~/Projects/` using Git and populates `~/.gemini/config/` (AGENTS.md, skills, plugins, MCP servers, and project manifests).
 - **🔒 Enterprise Security (OS Keychain)**: Encrypts secrets using Windows Credential Manager / macOS Keychain via `keytar`.
-- **🔄 Background Sync Engine**: Runs lightweight `git fetch` checks and checks for sharing invitations every 15 minutes + offers a manual "Sync Now" button.
+- **🔄 Non-Blocking Background Sync Engine**: Runs lightweight `git fetch` checks and checks for sharing invitations every 15 minutes + offers a manual "Sync Now" button.
+- **🔍 Interactive File Diff Inspector Modal**: Click **`Inspect Synced File Changes`** on any activity log entry to view exact line-by-line colored diffs (`+` green additions / `-` red deletions) of provisioned `.gemini` rules and project manifests.
+- **⚡ Auto-Installer & README Instruction Parser**: Reads project `README.md` files and automatically executes `yarn`, `pnpm`, `poetry`, `pip`, `npm`, and setup scripts (`setup.sh`/`setup.bat`) in worker threads.
+- **🎨 Premium Solid Slate UI (Zero Emoji / Zero AI Glop)**: Designed according to strict UX standards with single-scrollbar progressive disclosure layout to eliminate nested scrollbar hijacking.
 
 ---
 
@@ -24,7 +27,7 @@ Antigravity Sync is an enterprise-grade workspace synchronization platform power
 ```
 antigravity-sync/
 ├── sync-server/         ← Backend API (Node.js + Express + Neon PostgreSQL, Vercel ready)
-├── desktop-app/         ← Native Desktop App (Electron + React/JS + simple-git + keytar)
+├── desktop-app/         ← Native Desktop App (Electron + Vanilla CSS + simple-git + keytar)
 └── portal-website/      ← Download Landing Page (HTML5 + CSS3 + JS OS auto-detect)
 ```
 
@@ -103,22 +106,18 @@ Simply open `portal-website/index.html` in any web browser or host via static we
 When a developer clicks **"Set Up My Machine"**, Antigravity Sync structures their computer:
 
 ```
-~/Projects/                                  # Project root on user's machine
-├── 📁 App Frontend/                         # Cloned Git repository
-├── 📁 Design System/                        # Cloned Git repository
+~/Projects/                                  # Project root on user's machine (Windows: C:\Users\<User>\Projects\)
+├── 📁 HRMS-FE/                              # Cloned Git repository
+├── 📁 HRMS-BE/                              # Cloned Git repository
 └── 📁 My Side App/                          # Cloned personal repository
 
 ~/.gemini/
-├── config/
-│   ├── AGENTS.md                            # Merged company standards & guidelines
-│   ├── config.json                          # Permissions & settings
-│   ├── mcp_config.json                      # Rendered tool connections with OS Keychain secrets
-│   ├── plugins/                             # Installed company plugins
-│   ├── skills/                              # Synced company skills
-│   └── projects/                            # Auto-registered project UUID manifests
-│       ├── {uuid-app-frontend}.json
-│       └── {uuid-design-system}.json
-└── sync-engine/                             # Sync logs & lockfiles
+└── config/
+    ├── AGENTS.md                            # Merged company standards & guidelines
+    ├── mcp_config.json                      # Rendered tool connections with OS Keychain secrets
+    └── projects/                            # Auto-registered project manifests for Antigravity IDE
+        ├── HRMS-FE.json
+        └── HRMS-BE.json
 ```
 
 ---

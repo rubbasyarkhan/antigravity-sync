@@ -21,7 +21,8 @@ Setting up a new developer machine or onboarding onto a team codebase typically 
 | **AI Agent Rules** | Manual configuration | **Auto-provisioned `~/.gemini/config/AGENTS.md`** |
 | **IDE Workspaces** | Manual folder adding | **Auto-registered `~/.gemini/config/projects/*.json`** |
 | **Background Sync** | Manual `git pull` across repos | **Automatic 15-Minute Background Engine** |
-| **OS UI Performance** | System UI freezes during long operations | **100% Non-blocking async event loop yielding** |
+| **Audit Log Diffs** | None / Blind logs | **Interactive File Diff Inspector Modal** |
+| **OS UI Performance** | System UI freezes during long operations | **100% Non-blocking async worker execution** |
 
 ---
 
@@ -43,8 +44,8 @@ Setting up a new developer machine or onboarding onto a team codebase typically 
 
 ---
 
-### Step 3: Click "🚀 Set Up My Machine"
-1. At the top right of the dashboard, click **"🚀 Set Up My Machine"**.
+### Step 3: Click "Set Up My Machine"
+1. At the top right of the dashboard, click **"Set Up My Machine"**.
 2. Sit back and watch the live progress window!
 
 **What Antigravity Sync does automatically during setup:**
@@ -56,40 +57,21 @@ Setting up a new developer machine or onboarding onto a team codebase typically 
 
 ---
 
-### Step 4: Start Chatting with Antigravity AI!
+### Step 4: Inspect Synced File Diffs in Real Time
+1. Go to the **Sync Status** tab.
+2. Each sync execution records an accurate activity log card.
+3. Click **`Inspect Synced File Changes`** on any log entry.
+4. An interactive modal opens displaying exact line-by-line colored diffs (`+` green additions / `-` red deletions) of provisioned rules and project manifests!
+
+---
+
+### Step 5: Start Chatting with Antigravity AI!
 1. When setup finishes, click **"Done — Open Projects Folder"**.
-2. Open your Antigravity IDE or terminal.
-3. Your code is cloned, dependencies are installed, and Antigravity AI is ready for instant pair programming!
+2. Launch Antigravity IDE — all your toggled repositories, rules, plugins, and tools are configured and ready for instant AI coding conversations.
 
 ---
 
-## 📋 Reviewing Sync Activity Logs
-
-To inspect synchronization events:
-1. Click **Sync Status** in the sidebar navigation.
-2. Review the **📋 Sync History & Activity Logs** list.
-3. Each log entry shows:
-   - Timestamp & Sync Type (`🔄 AUTOMATIC 15-Min Timer` vs `🖱️ MANUAL`).
-   - Exact Projects Disk Path (`C:\Users\Rubbas\Projects\`).
-   - Exact Gemini Config Path (`C:\Users\Rubbas\.gemini\config\`).
-   - Full list of synced config files and project manifests.
-
----
-
-## ❓ Frequently Asked Questions (FAQ)
-
-#### Q: Where are my projects saved?
-All projects are safely cloned into your user's standard `Projects` folder:
-`C:\Users\<Your-Username>\Projects\`
-
-#### Q: Do I need Administrator / Elevated Privileges?
-No! Antigravity Sync installs directly into user-space directories (`~/Projects/` and `~/.gemini/config/`), so non-administrator users can use 100% of its features without Windows Controlled Folder Access blocks.
-
-#### Q: How does repository sharing work?
-1. Click the **`👥 Share`** button next to any personal project.
-2. Enter your teammate's GitHub username.
-3. An invitation will appear in their **Notifications** tab to accept and sync with 1 click!
-
----
-
-*Antigravity Sync Engine v1.0.0 — Powered by Node.js, Electron, Express, and Neon PostgreSQL.*
+## 🔒 Security & Privacy
+- **Zero Proprietary Accounts**: Authentication uses your official GitHub ID.
+- **Keychain Storage**: JWT tokens and secrets are stored in your operating system's native keychain.
+- **User-Space Safety**: Clones repositories into `~/Projects/` (`C:\Users\<User>\Projects\`) avoiding OS privilege errors.
