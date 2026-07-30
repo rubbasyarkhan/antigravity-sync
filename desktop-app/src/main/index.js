@@ -94,6 +94,11 @@ function setupIPC() {
     return await syncNow();
   });
 
+  ipcMain.handle('sync:getLogs', async () => {
+    const { getSyncLogs } = require('./sync');
+    return getSyncLogs();
+  });
+
   ipcMain.handle('git:clone', async (_event, { repoUrl, projectName }) => {
     return await cloneProjects([{ name: projectName, repo_url: repoUrl }]);
   });

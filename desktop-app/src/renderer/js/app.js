@@ -8,6 +8,7 @@ let state = {
   user: null,
   workspace: null,
   enabledSlugs: new Set(),
+  enabledPersonalSlugs: new Set(),
 };
 
 // UI Element References
@@ -35,16 +36,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Subscribe to IPC events push from main process
     window.electronAPI.onAuthSuccess((token) => handleAuthentication(token));
-    window.electronAPI.onSyncStarted(() => updateSyncStatus('Syncing...'));
+    window.electronAPI.onSyncStarted((data) => updateSyncStatus('Syncing...'));
     window.electronAPI.onSyncCompleted((data) => {
       updateSyncStatus('Synced', data.time);
       if (data.workspace) {
         state.workspace = data.workspace;
         renderProjects();
       }
+      if (data.logs) {
+        renderSyncLogs(data.logs);
+      }
     });
-    window.electronAPI.onSyncError((data) => updateSyncStatus('Error', data.time));
+    window.electronAPI.onSyncError((data) => {
+      updateSyncStatus('Error', data.time);
+      if (data.logs) {
+        renderSyncLogs(data.logs);
+      }
+    });
     window.electronAPI.onNewInvites((invites) => renderInvites(invites));
+
+    // Load initial sync logs
+    if (window.electronAPI.getSyncLogs) {
+      const logs = await window.electronAPI.getSyncLogs();
+      renderSyncLogs(logs);
+    }
   }
 });
 
@@ -88,13 +103,19 @@ function setupEventListeners() {
       await window.electronAPI.logout();
     }
     state.token = null;
+    state.user = null;
+    state.workspace = null;
     showScreen('login');
   });
 
   const triggerSync = async () => {
     if (window.electronAPI) {
       updateSyncStatus('Syncing...');
-      await window.electronAPI.syncNow();
+      const res = await window.electronAPI.syncNow();
+      if (res && res.logs) {
+        renderSyncLogs(res.logs);
+      }
+      await fetchWorkspace();
     }
   };
 
@@ -103,7 +124,7 @@ function setupEventListeners() {
 
   btnOpenFolder.addEventListener('click', () => {
     if (window.electronAPI) {
-      window.electronAPI.openFolder('~/Projects/');
+      window.electronAPI.openFolder('~/Documents/Projects/');
     }
   });
 }
@@ -137,14 +158,25 @@ async function fetchWorkspace() {
       headers: { Authorization: `Bearer ${state.token}` },
     });
 
+    if (res.status === 401) {
+      console.warn('Session expired, clearing token and redirecting to login...');
+      if (window.electronAPI) await window.electronAPI.logout();
+      state.token = null;
+      showScreen('login');
+      return;
+    }
+
     if (res.ok) {
       state.workspace = await res.json();
       state.enabledSlugs = new Set(state.workspace.enabled_slugs || []);
+      state.enabledPersonalSlugs = new Set();
       renderProjects();
       renderInvites(state.workspace.pending_invites || []);
+    } else {
+      console.error('Workspace fetch error status:', res.status);
     }
   } catch (err) {
-    console.error('Failed to fetch workspace:', err);
+    console.error('Failed to fetch workspace from server:', err);
   }
 }
 
@@ -162,4 +194,35 @@ function updateSyncStatus(statusText, timeIso) {
   if (timeIso) {
     timeLabel.textContent = new Date(timeIso).toLocaleTimeString();
   }
+}
+
+function renderSyncLogs(logs = []) {
+  const container = document.getElementById('sync-activity-logs');
+  if (!container) return;
+
+  if (logs.length === 0) {
+    container.innerHTML = '<div class="empty-state">No sync activity logged yet.</div>';
+    return;
+  }
+
+  container.innerHTML = logs
+    .map((log) => {
+      const isError = log.status === 'Error';
+      const isManual = log.triggerType && log.triggerType.includes('Manual');
+      const badgeColor = isManual ? '#3b82f6' : '#8b5cf6';
+      const typeLabel = isManual ? '🖱️ MANUAL' : '🔄 AUTOMATIC';
+
+      return `
+      <div style="border-bottom: 1px solid var(--border-color); padding: 10px 0; font-size: 12px; font-family: monospace;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="background:${badgeColor}; color:#ffffff; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;">${typeLabel}</span>
+          <span style="color: var(--text-muted); font-size: 11px;">🕒 ${log.timestamp}</span>
+        </div>
+        <div style="color: ${isError ? '#f87171' : '#4ade80'}; font-weight: 600; margin-bottom: 4px;">${escapeHtml(log.summary)}</div>
+        <div style="color: var(--text-muted); font-size: 11px;">📁 Projects Path: <span style="color:#ffffff;">${escapeHtml(log.targetPath)}</span></div>
+        <div style="color: var(--text-muted); font-size: 11px;">⚙️ Config Path: <span style="color:#ffffff;">${escapeHtml(log.configPath)}</span></div>
+      </div>
+    `;
+    })
+    .join('');
 }

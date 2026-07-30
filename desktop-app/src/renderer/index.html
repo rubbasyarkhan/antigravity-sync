@@ -115,7 +115,7 @@
 
       <!-- Sync Status Tab -->
       <div id="tab-sync" class="tab-content">
-        <div class="tab-header"><h2>Sync Status</h2></div>
+        <div class="tab-header"><h2>Sync Status & Activity Logs</h2></div>
         <div class="sync-status-card">
           <div class="sync-row">
             <span>Status</span>
@@ -131,6 +131,13 @@
           </div>
           <button id="btn-sync-now-2" class="btn-primary" style="margin-top:16px">🔄 Sync Now</button>
         </div>
+
+        <section class="project-section" style="margin-top: 24px;">
+          <h3 class="section-title">📋 Sync History & Activity Logs</h3>
+          <div id="sync-activity-logs" style="background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; max-height: 280px; overflow-y: auto;">
+            <div class="empty-state">No sync activity logged yet.</div>
+          </div>
+        </section>
       </div>
 
       <!-- Settings Tab -->

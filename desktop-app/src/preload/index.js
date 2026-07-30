@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Sync IPC
   syncNow: () => ipcRenderer.invoke('sync:now'),
+  getSyncLogs: () => ipcRenderer.invoke('sync:getLogs'),
 
   // Git & Provisioning IPC
   cloneProject: (repoUrl, projectName) =>
