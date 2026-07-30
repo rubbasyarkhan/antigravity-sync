@@ -8,6 +8,7 @@ let state = {
   user: null,
   workspace: null,
   enabledSlugs: new Set(),
+  enabledPersonalSlugs: new Set(),
 };
 
 // UI Element References
@@ -88,6 +89,8 @@ function setupEventListeners() {
       await window.electronAPI.logout();
     }
     state.token = null;
+    state.user = null;
+    state.workspace = null;
     showScreen('login');
   });
 
@@ -95,6 +98,7 @@ function setupEventListeners() {
     if (window.electronAPI) {
       updateSyncStatus('Syncing...');
       await window.electronAPI.syncNow();
+      await fetchWorkspace();
     }
   };
 
@@ -137,14 +141,25 @@ async function fetchWorkspace() {
       headers: { Authorization: `Bearer ${state.token}` },
     });
 
+    if (res.status === 401) {
+      console.warn('Session expired, clearing token and redirecting to login...');
+      if (window.electronAPI) await window.electronAPI.logout();
+      state.token = null;
+      showScreen('login');
+      return;
+    }
+
     if (res.ok) {
       state.workspace = await res.json();
       state.enabledSlugs = new Set(state.workspace.enabled_slugs || []);
+      state.enabledPersonalSlugs = new Set();
       renderProjects();
       renderInvites(state.workspace.pending_invites || []);
+    } else {
+      console.error('Workspace fetch error status:', res.status);
     }
   } catch (err) {
-    console.error('Failed to fetch workspace:', err);
+    console.error('Failed to fetch workspace from server:', err);
   }
 }
 
