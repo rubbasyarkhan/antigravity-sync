@@ -1,5 +1,6 @@
 /**
  * Config Writer — Provisions ~/.gemini/config/ rules, skills, plugins, MCP servers, and project manifests
+ * Records detailed file-by-file synchronization logs for ~/.gemini/
  */
 const path = require('path');
 const os = require('os');
@@ -20,12 +21,13 @@ function ensureDirectories() {
 }
 
 /**
- * Provisions global & project-level Antigravity configs
+ * Provisions global & project-level Antigravity configs and returns detailed file logs
  * @param {Object} workspaceData
  * @param {Array} activeProjects
  */
 function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
   ensureDirectories();
+  const writtenFiles = [];
 
   // 1. Write AGENTS.md global standards rule file
   const baseRuleContent = `# Antigravity Company Standards & Guidelines
@@ -35,14 +37,31 @@ function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
 - Use OS Keychain for secret storage; never hardcode credentials.
 `;
 
-  fs.writeFileSync(path.join(CONFIG_DIR, 'AGENTS.md'), baseRuleContent, 'utf-8');
+  const agentsPath = path.join(CONFIG_DIR, 'AGENTS.md');
+  fs.writeFileSync(agentsPath, baseRuleContent, 'utf-8');
+  writtenFiles.push({
+    file: agentsPath,
+    type: 'Global Rules File (AGENTS.md)',
+    action: 'PROVISIONED',
+    sizeBytes: Buffer.byteLength(baseRuleContent, 'utf-8'),
+    updatedAt: new Date().toISOString()
+  });
 
-  // 2. Write clean mcp_config.json
+  // 2. Write mcp_config.json
   const mcpConfig = {
     mcpServers: {}
   };
 
-  fs.writeFileSync(path.join(CONFIG_DIR, 'mcp_config.json'), JSON.stringify(mcpConfig, null, 2), 'utf-8');
+  const mcpPath = path.join(CONFIG_DIR, 'mcp_config.json');
+  const mcpStr = JSON.stringify(mcpConfig, null, 2);
+  fs.writeFileSync(mcpPath, mcpStr, 'utf-8');
+  writtenFiles.push({
+    file: mcpPath,
+    type: 'MCP Server Config (mcp_config.json)',
+    action: 'PROVISIONED',
+    sizeBytes: Buffer.byteLength(mcpStr, 'utf-8'),
+    updatedAt: new Date().toISOString()
+  });
 
   // 3. Register active project manifests in ~/.gemini/config/projects/
   activeProjects.forEach((proj) => {
@@ -50,15 +69,23 @@ function writeAntigravityConfig(workspaceData = {}, activeProjects = []) {
     const manifest = {
       name: proj.name,
       slug: proj.slug || proj.name,
-      path: path.join(os.homedir(), 'Documents', 'Projects', proj.name),
+      path: path.join(os.homedir(), 'Projects', proj.name),
       repo_url: proj.repo_url,
       team: proj.team || 'Personal',
       updated_at: new Date().toISOString()
     };
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+    const manifestStr = JSON.stringify(manifest, null, 2);
+    fs.writeFileSync(manifestPath, manifestStr, 'utf-8');
+    writtenFiles.push({
+      file: manifestPath,
+      type: `Project Manifest (${proj.name})`,
+      action: 'REGISTERED',
+      sizeBytes: Buffer.byteLength(manifestStr, 'utf-8'),
+      updatedAt: new Date().toISOString()
+    });
   });
 
-  return { success: true, configDir: CONFIG_DIR };
+  return { success: true, configDir: CONFIG_DIR, writtenFiles };
 }
 
 module.exports = { writeAntigravityConfig };

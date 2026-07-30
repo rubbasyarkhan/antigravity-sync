@@ -124,7 +124,7 @@ function setupEventListeners() {
 
   btnOpenFolder.addEventListener('click', () => {
     if (window.electronAPI) {
-      window.electronAPI.openFolder('~/Documents/Projects/');
+      window.electronAPI.openFolder('~/Projects/');
     }
   });
 }
@@ -213,14 +213,17 @@ function renderSyncLogs(logs = []) {
       const typeLabel = isManual ? '🖱️ MANUAL' : '🔄 AUTOMATIC';
 
       return `
-      <div style="border-bottom: 1px solid var(--border-color); padding: 10px 0; font-size: 12px; font-family: monospace;">
+      <div style="border-bottom: 1px solid var(--border-color); padding: 12px 0; font-size: 12px; font-family: monospace;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="background:${badgeColor}; color:#ffffff; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;">${typeLabel}</span>
           <span style="color: var(--text-muted); font-size: 11px;">🕒 ${log.timestamp}</span>
         </div>
         <div style="color: ${isError ? '#f87171' : '#4ade80'}; font-weight: 600; margin-bottom: 4px;">${escapeHtml(log.summary)}</div>
-        <div style="color: var(--text-muted); font-size: 11px;">📁 Projects Path: <span style="color:#ffffff;">${escapeHtml(log.targetPath)}</span></div>
-        <div style="color: var(--text-muted); font-size: 11px;">⚙️ Config Path: <span style="color:#ffffff;">${escapeHtml(log.configPath)}</span></div>
+        <div style="color: var(--text-muted); font-size: 11px;">📁 Projects Directory: <span style="color:#ffffff;">${escapeHtml(log.targetPath)}</span></div>
+        <div style="color: var(--text-muted); font-size: 11px;">⚙️ Gemini Config Directory: <span style="color:#ffffff;">${escapeHtml(log.configPath)}</span></div>
+        <div style="margin-top: 6px; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 4px; font-size: 11px; color: var(--accent-blue);">
+          📄 Synced Config Files: AGENTS.md (Global Rules), mcp_config.json (Tools), projects/*.json (Manifests)
+        </div>
       </div>
     `;
     })
