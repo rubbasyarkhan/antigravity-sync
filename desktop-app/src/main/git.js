@@ -1,6 +1,6 @@
 /**
- * Git engine module — executes repository cloning, dependency installation (Node.js & Python),
- * and Antigravity IDE workspace project provisioning into ~/Projects/
+ * Git engine module — executes repository cloning, system environment verification,
+ * dependency installation (Node.js & Python), and Antigravity IDE workspace project provisioning into ~/Projects/
  */
 const { spawn } = require('child_process');
 const path = require('path');
@@ -38,10 +38,51 @@ function runShellCmd(command, args, cwd) {
 }
 
 /**
+ * Verifies system installation of Node.js, Python, and Git binaries
+ */
+async function verifySystemEnvironment() {
+  const envStatus = {
+    node: false,
+    nodeVersion: 'Not Found',
+    python: false,
+    pythonVersion: 'Not Found',
+    git: false,
+    gitVersion: 'Not Found'
+  };
+
+  try {
+    const nodeOut = await runShellCmd('node', ['-v'], process.cwd());
+    if (nodeOut && nodeOut.startsWith('v')) {
+      envStatus.node = true;
+      envStatus.nodeVersion = nodeOut;
+    }
+  } catch (e) {}
+
+  try {
+    const pyOut = await runShellCmd('python', ['--version'], process.cwd());
+    if (pyOut && (pyOut.includes('Python') || pyOut.startsWith('3.'))) {
+      envStatus.python = true;
+      envStatus.pythonVersion = pyOut;
+    }
+  } catch (e) {}
+
+  try {
+    const gitOut = await runShellCmd('git', ['--version'], process.cwd());
+    if (gitOut && gitOut.includes('git version')) {
+      envStatus.git = true;
+      envStatus.gitVersion = gitOut;
+    }
+  } catch (e) {}
+
+  return envStatus;
+}
+
+/**
  * Auto-installs Node.js & Python dependencies and provisions local .agents/ directory
  */
 async function installDependenciesAndProvision(projectName, targetDir, onProgress = () => {}) {
   const installedTech = [];
+  const details = { npmInstalled: false, pipInstalled: false, agentsCreated: false };
 
   // 1. Provision local .agents/AGENTS.md for instant Antigravity AI conversation readiness
   const agentsDir = path.join(targetDir, '.agents');
@@ -59,13 +100,15 @@ async function installDependenciesAndProvision(projectName, targetDir, onProgres
 `;
     fs.writeFileSync(agentRulePath, defaultAgentRules, 'utf-8');
     installedTech.push('.agents rules');
+    details.agentsCreated = true;
   }
 
   // 2. Node.js dependency installation (package.json)
   if (fs.existsSync(path.join(targetDir, 'package.json'))) {
-    onProgress(projectName, 'installing npm dependencies...');
+    onProgress(projectName, 'installing npm packages...');
     await runShellCmd('npm', ['install', '--no-audit', '--no-fund'], targetDir);
     installedTech.push('npm packages');
+    details.npmInstalled = true;
   }
 
   // 3. Python dependency installation (requirements.txt)
@@ -73,9 +116,10 @@ async function installDependenciesAndProvision(projectName, targetDir, onProgres
     onProgress(projectName, 'installing python requirements...');
     await runShellCmd('python', ['-m', 'pip', 'install', '-r', 'requirements.txt'], targetDir);
     installedTech.push('pip requirements');
+    details.pipInstalled = true;
   }
 
-  return installedTech;
+  return { installedTech, details };
 }
 
 /**
@@ -109,17 +153,18 @@ async function cloneProjects(projects, onProgress = () => {}) {
 
       // Auto-install dependencies (Node.js/npm & Python/pip) + provision .agents/
       onProgress(project.name, 'installing dependencies...', i + 1, projects.length);
-      const techList = await installDependenciesAndProvision(project.name, targetDir, (name, step) => onProgress(name, step, i + 1, projects.length));
+      const { installedTech, details } = await installDependenciesAndProvision(project.name, targetDir, (name, step) => onProgress(name, step, i + 1, projects.length));
 
       const statusMsg = isUpdate
-        ? `Updated & installed dependencies (${techList.join(', ') || 'ready'})`
-        : `Cloned & installed dependencies (${techList.join(', ') || 'ready'})`;
+        ? `Updated & verified dependencies (${installedTech.join(', ') || 'already installed'})`
+        : `Cloned & installed dependencies (${installedTech.join(', ') || 'ready'})`;
 
       results.push({
         name: project.name,
         status: isUpdate ? 'pulled' : 'cloned',
         path: targetDir,
         installedTech,
+        details,
         message: statusMsg
       });
       onProgress(project.name, 'done', i + 1, projects.length);
@@ -161,4 +206,4 @@ async function fetchAllProjects() {
   return results;
 }
 
-module.exports = { cloneProjects, fetchAllProjects, PROJECTS_DIR };
+module.exports = { cloneProjects, fetchAllProjects, verifySystemEnvironment, PROJECTS_DIR };

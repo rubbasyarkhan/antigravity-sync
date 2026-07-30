@@ -115,9 +115,13 @@ function setupIPC() {
   });
 
   ipcMain.handle('git:checkLocalExist', async (_event, projectName) => {
-    const fs = require('fs');
-    const targetDir = path.join(os.homedir(), 'Documents', 'Projects', projectName);
+    const targetDir = path.join(os.homedir(), 'Projects', projectName);
     return fs.existsSync(path.join(targetDir, '.git'));
+  });
+
+  ipcMain.handle('system:verifyEnv', async () => {
+    const { verifySystemEnvironment } = require('./git');
+    return await verifySystemEnvironment();
   });
 
   ipcMain.handle('shell:openFolder', async (_event, folderPath) => {

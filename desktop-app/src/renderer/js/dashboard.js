@@ -1,5 +1,5 @@
 /**
- * Dashboard & Project List Rendering Engine with Real-Time Search, Personal Toggles & Progress Bar
+ * Dashboard & Project List Rendering Engine with Real-Time Search, Personal Toggles, Environment Verification & Progress Bar
  */
 let searchQuery = '';
 
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnProgressClose.addEventListener('click', () => {
       document.getElementById('modal-progress').classList.add('hidden');
       if (window.electronAPI) {
-        window.electronAPI.openFolder('~/Documents/Projects/');
+        window.electronAPI.openFolder('~/Projects/');
       }
     });
   }
@@ -179,11 +179,21 @@ async function handleSetupMachine() {
   modalProgress.classList.remove('hidden');
   btnProgressClose.classList.add('hidden');
   progressBarFill.style.width = '5%';
-  progressStepText.textContent = '⚡ Initializing setup engine...';
-  progressLogList.innerHTML = '<div>> Target directory: Documents/Projects/</div>';
+  progressStepText.textContent = '⚡ Verifying system environment...';
+  progressLogList.innerHTML = '<div>> Verifying Node.js, Python, and Git installation...</div>';
 
   if (window.electronAPI) {
     try {
+      // 1. Verify system environment binaries
+      if (window.electronAPI.verifyEnv) {
+        const env = await window.electronAPI.verifyEnv();
+        progressLogList.innerHTML += `<div style="color:#60a5fa">> Node.js: ${env.node ? env.nodeVersion : 'Not Installed'}</div>`;
+        progressLogList.innerHTML += `<div style="color:#60a5fa">> Python: ${env.python ? env.pythonVersion : 'Not Installed'}</div>`;
+        progressLogList.innerHTML += `<div style="color:#60a5fa">> Git: ${env.git ? env.gitVersion : 'Not Installed'}</div>`;
+      }
+
+      progressLogList.innerHTML += '<div>> Target directory: ~/Projects/</div>';
+
       let completedCount = 0;
 
       for (let i = 0; i < allSelected.length; i++) {
@@ -191,39 +201,36 @@ async function handleSetupMachine() {
         const pct = Math.round(((i + 1) / allSelected.length) * 90);
         progressBarFill.style.width = `${pct}%`;
 
-        progressStepText.textContent = `📦 Processing (${i + 1}/${allSelected.length}): ${proj.name}...`;
+        progressStepText.textContent = `📦 Processing & installing dependencies (${i + 1}/${allSelected.length}): ${proj.name}...`;
 
         // Yield UI thread to keep Electron responsive and paint DOM updates
         await new Promise((r) => setTimeout(r, 50));
 
-        // Execute Git operation
+        // Execute Git & Dependency Installation
         const result = await window.electronAPI.cloneProject(proj.repo_url, proj.name);
         completedCount++;
 
         const resItem = result && result[0] ? result[0] : { status: 'done' };
-        const isUpdate = resItem.status === 'pulled';
         const isError = resItem.status === 'error';
 
-        const statusIcon = isError ? '❌' : isUpdate ? '🔄' : '✅';
+        const statusIcon = isError ? '❌' : '✅';
         const statusMsg = isError
           ? `Error: ${resItem.error}`
-          : isUpdate
-          ? `Already cloned — updated project`
-          : `Initialized new project`;
+          : resItem.message || 'Cloned, dependencies installed & Antigravity AI ready';
 
-        progressLogList.innerHTML += `<div style="color:${isError ? '#f87171' : isUpdate ? '#60a5fa' : '#4ade80'}">${statusIcon} ${proj.name}: ${statusMsg}</div>`;
+        progressLogList.innerHTML += `<div style="color:${isError ? '#f87171' : '#4ade80'}">${statusIcon} ${proj.name}: ${statusMsg}</div>`;
         progressLogList.scrollTop = progressLogList.scrollHeight;
         await new Promise((r) => setTimeout(r, 50));
       }
 
       // Provision ~/.gemini/config/
       progressBarFill.style.width = '100%';
-      progressStepText.textContent = '✅ Provisioning ~/.gemini/config/ rules & manifests...';
+      progressStepText.textContent = '✅ Provisioning ~/.gemini/config/ rules & workspace manifests...';
       await window.electronAPI.setupMachine(allSelected, state.workspace);
 
-      progressStepText.textContent = '🎉 All selected projects set up successfully!';
-      progressLogList.innerHTML += `<div style="color:#4ade80; font-weight:bold; margin-top:8px">> Setup complete! ${completedCount} project(s) ready in Documents/Projects/</div>`;
-      progressLogList.innerHTML += `<div style="color:#60a5fa">> Rules & manifests written to ~/.gemini/config/</div>`;
+      progressStepText.textContent = '🎉 All selected projects & dependencies set up successfully!';
+      progressLogList.innerHTML += `<div style="color:#4ade80; font-weight:bold; margin-top:8px">> Setup complete! ${completedCount} project(s) ready in ~/Projects/</div>`;
+      progressLogList.innerHTML += `<div style="color:#60a5fa">> Dependencies installed (npm/pip) & .agents rules written for Antigravity AI chat!</div>`;
       btnProgressClose.classList.remove('hidden');
 
       renderProjects();

@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   checkLocalExist: (projectName) =>
     ipcRenderer.invoke('git:checkLocalExist', projectName),
+  verifyEnv: () => ipcRenderer.invoke('system:verifyEnv'),
 
   // System Shell IPC
   openFolder: (folderPath) => ipcRenderer.invoke('shell:openFolder', folderPath),
