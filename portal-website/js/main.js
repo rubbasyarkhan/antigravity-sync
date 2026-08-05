@@ -22,21 +22,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (os === 'mac') {
     btnLabel.textContent = 'Download for Mac';
-    btnSub.textContent = '.dmg Installer • Auto-detected for macOS';
-    downloadBtn.href = 'releases/AntigravitySync.dmg';
-    downloadBtn.setAttribute('download', 'AntigravitySync.dmg');
+    btnSub.textContent = 'Package (.zip) • Auto-detected for macOS';
+    downloadBtn.href = 'releases/AntigravitySync-macOS.zip';
+    downloadBtn.setAttribute('download', 'AntigravitySync-macOS.zip');
     if (iconContainer) iconContainer.innerHTML = macSvg;
   } else if (os === 'linux') {
     btnLabel.textContent = 'Download for Linux';
-    btnSub.textContent = '.AppImage • Auto-detected for Linux';
-    downloadBtn.href = 'releases/AntigravitySync.AppImage';
-    downloadBtn.setAttribute('download', 'AntigravitySync.AppImage');
+    btnSub.textContent = 'Package (.zip) • Auto-detected for Linux';
+    downloadBtn.href = 'releases/AntigravitySync-Linux.zip';
+    downloadBtn.setAttribute('download', 'AntigravitySync-Linux.zip');
     if (iconContainer) iconContainer.innerHTML = linuxSvg;
   } else {
     btnLabel.textContent = 'Download for Windows';
-    btnSub.textContent = '.exe Installer • Auto-detected for Windows';
-    downloadBtn.href = 'releases/AntigravitySync-Setup.exe';
-    downloadBtn.setAttribute('download', 'AntigravitySync-Setup.exe');
+    btnSub.textContent = 'Package (.zip) • Auto-detected for Windows';
+    downloadBtn.href = 'releases/AntigravitySync-Windows.zip';
+    downloadBtn.setAttribute('download', 'AntigravitySync-Windows.zip');
     if (iconContainer) iconContainer.innerHTML = windowsSvg;
   }
 });
