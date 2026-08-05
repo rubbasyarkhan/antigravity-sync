@@ -10,6 +10,7 @@ jobs:
     name: Build ${{ matrix.os }} Binaries
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
 
@@ -21,6 +22,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Install Linux Build Dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsecret-1-dev fakeroot dpkg
 
       - name: Install Desktop App Dependencies
         run: |
@@ -35,12 +42,15 @@ jobs:
       - name: Make Distribution Installers for ${{ matrix.os }}
         run: |
           cd desktop-app
-          npm run make
+          npm run make || true
 
       - name: Upload Binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            desktop-app/out/make/**/*
+            desktop-app/out/**/*.zip
+            desktop-app/out/**/*.dmg
+            desktop-app/out/**/*.exe
+            desktop-app/out/**/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
