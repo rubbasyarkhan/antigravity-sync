@@ -3,7 +3,7 @@
  */
 const { shell } = require('electron');
 
-const SYNC_SERVER_URL = process.env.SYNC_SERVER_URL || 'http://localhost:3000';
+const SYNC_SERVER_URL = process.env.SYNC_SERVER_URL || 'https://antigravity-sync-three.vercel.app';
 
 async function startGitHubLogin() {
   const loginUrl = `${SYNC_SERVER_URL}/auth/github`;
@@ -11,4 +11,4 @@ async function startGitHubLogin() {
   return { started: true, loginUrl };
 }
 
-module.exports = { startGitHubLogin };
+module.exports = { startGitHubLogin, SYNC_SERVER_URL };

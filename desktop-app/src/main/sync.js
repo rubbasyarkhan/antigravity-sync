@@ -11,7 +11,7 @@ const { fetchAllProjects, PROJECTS_DIR } = require('./git');
 const { writeAntigravityConfig } = require('./config-writer');
 const { scanLocalGeminiConfig } = require('./gemini-scanner');
 
-const SYNC_SERVER_URL = process.env.SYNC_SERVER_URL || 'http://localhost:3000';
+const SYNC_SERVER_URL = process.env.SYNC_SERVER_URL || 'https://antigravity-sync-three.vercel.app';
 const SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 Minutes
 
 let syncTimer = null;

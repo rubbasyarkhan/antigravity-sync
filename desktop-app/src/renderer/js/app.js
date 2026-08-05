@@ -1,7 +1,9 @@
 /**
  * Main Renderer App Logic — With Sync Inspection Diff Modal & Single-Scrollbar UX Architecture
  */
-const SYNC_SERVER_URL = 'http://localhost:3000';
+const SYNC_SERVER_URL = (typeof window !== 'undefined' && window.location && window.location.hostname === 'localhost')
+  ? 'http://localhost:3000'
+  : 'https://antigravity-sync-three.vercel.app';
 
 let state = {
   token: null,
