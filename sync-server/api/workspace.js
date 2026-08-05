@@ -10,21 +10,26 @@ const { sql } = require('../lib/db');
 const router = Router();
 
 router.get('/', requireAuth, async (req, res) => {
-  const { github_login } = req.user;
+  const { github_login, access_token: jwtAccessToken } = req.user;
 
   try {
-    // 1. Fetch user's GitHub access token from database (case-insensitive search)
-    const [userRow] = await sql`
-      SELECT access_token FROM users WHERE LOWER(github_login) = LOWER(${github_login})
-    `;
+    let accessToken = jwtAccessToken;
+
+    // 1. Fetch user's GitHub access token if not present in JWT
+    if (!accessToken) {
+      const [userRow] = await sql`
+        SELECT access_token FROM users WHERE LOWER(github_login) = LOWER(${github_login})
+      `;
+      accessToken = userRow?.access_token;
+    }
 
     let ghAssignedProjects = [];
     let ghPersonalProjects = [];
 
     // 2. Fetch live repositories directly from GitHub API using the user's OAuth access token
-    if (userRow && userRow.access_token) {
+    if (accessToken) {
       const headers = {
-        Authorization: `Bearer ${userRow.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
         'User-Agent': 'Antigravity-Sync-Server',
       };
 
@@ -48,12 +53,19 @@ router.get('/', requireAuth, async (req, res) => {
                 description: repo.description || `Repository from ${repo.owner.login}`,
                 repo_url: repo.clone_url || repo.html_url,
                 team: repo.owner.login,
+                is_private: Boolean(repo.private),
+                language: repo.language || 'JavaScript',
+                stargazers_count: repo.stargazers_count || 0,
               });
             } else {
               ghPersonalProjects.push({
                 slug: repo.name,
                 name: repo.name,
+                description: repo.description || 'Personal repository',
                 repo_url: repo.clone_url || repo.html_url,
+                is_private: Boolean(repo.private),
+                language: repo.language || 'JavaScript',
+                stargazers_count: repo.stargazers_count || 0,
               });
             }
           });
@@ -77,6 +89,9 @@ router.get('/', requireAuth, async (req, res) => {
                       description: repo.description || `Organization repository from ${org.login}`,
                       repo_url: repo.clone_url || repo.html_url,
                       team: org.login,
+                      is_private: Boolean(repo.private),
+                      language: repo.language || 'JavaScript',
+                      stargazers_count: repo.stargazers_count || 0,
                     });
                   }
                 });
@@ -92,29 +107,42 @@ router.get('/', requireAuth, async (req, res) => {
     }
 
     // 3. Fetch explicit database assignments (if any)
-    const dbAssigned = await sql`
-      SELECT p.slug, p.name, p.description, p.repo_url, p.team
-      FROM projects p
-      INNER JOIN assignments a ON a.project_slug = p.slug
-      WHERE LOWER(a.github_login) = LOWER(${github_login})
-      ORDER BY p.team, p.name
-    `;
+    try {
+      const dbAssigned = await sql`
+        SELECT p.slug, p.name, p.description, p.repo_url, p.team
+        FROM projects p
+        INNER JOIN assignments a ON a.project_slug = p.slug
+        WHERE LOWER(a.github_login) = LOWER(${github_login})
+        ORDER BY p.team, p.name
+      `;
 
-    // Merge database assignments avoiding duplicates
-    dbAssigned.forEach((dbProj) => {
-      if (!ghAssignedProjects.some((p) => p.slug.toLowerCase() === dbProj.slug.toLowerCase())) {
-        ghAssignedProjects.push(dbProj);
+      // Merge database assignments avoiding duplicates
+      if (Array.isArray(dbAssigned)) {
+        dbAssigned.forEach((dbProj) => {
+          if (!ghAssignedProjects.some((p) => p.slug.toLowerCase() === dbProj.slug.toLowerCase())) {
+            ghAssignedProjects.push(dbProj);
+          }
+        });
       }
-    });
+    } catch (dbAssErr) {
+      console.warn('Database assignment query warning:', dbAssErr.message);
+    }
 
     // 4. Fetch saved workspace state for multi-device sync
-    const [workspace] = await sql`
-      SELECT enabled_slugs, personal_repos
-      FROM user_workspace
-      WHERE LOWER(github_login) = LOWER(${github_login})
-    `;
+    let savedPersonalRepos = [];
+    let enabledSlugs = [];
+    try {
+      const [workspace] = await sql`
+        SELECT enabled_slugs, personal_repos
+        FROM user_workspace
+        WHERE LOWER(github_login) = LOWER(${github_login})
+      `;
+      savedPersonalRepos = workspace?.personal_repos || [];
+      enabledSlugs = workspace?.enabled_slugs || [];
+    } catch (wsErr) {
+      console.warn('Workspace state query warning:', wsErr.message);
+    }
 
-    const savedPersonalRepos = workspace?.personal_repos || [];
     savedPersonalRepos.forEach((savedRepo) => {
       if (!ghPersonalProjects.some((p) => p.slug === savedRepo.slug || p.repo_url === savedRepo.repo_url)) {
         ghPersonalProjects.push(savedRepo);
@@ -122,19 +150,24 @@ router.get('/', requireAuth, async (req, res) => {
     });
 
     // 5. Fetch pending invites sent to this user
-    const invites = await sql`
-      SELECT id, from_login, project_slug, repo_url, created_at
-      FROM invites
-      WHERE LOWER(to_login) = LOWER(${github_login}) AND status = 'pending'
-      ORDER BY created_at DESC
-    `;
+    let invites = [];
+    try {
+      invites = await sql`
+        SELECT id, from_login, project_slug, repo_url, created_at
+        FROM invites
+        WHERE LOWER(to_login) = LOWER(${github_login}) AND status = 'pending'
+        ORDER BY created_at DESC
+      `;
+    } catch (invErr) {
+      console.warn('Invites query warning:', invErr.message);
+    }
 
     res.json({
       github_login,
       assigned_projects: ghAssignedProjects,
-      enabled_slugs: workspace?.enabled_slugs || [],
+      enabled_slugs: enabledSlugs,
       personal_repos: ghPersonalProjects,
-      pending_invites: invites,
+      pending_invites: invites || [],
     });
   } catch (err) {
     console.error('Workspace fetch error:', err);

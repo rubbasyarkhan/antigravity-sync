@@ -10,6 +10,7 @@
     "make": "electron-forge make"
   },
   "dependencies": {
+    "docx": "^9.7.1",
     "dotenv": "^16.4.5",
     "keytar": "^7.9.0",
     "node-fetch": "^2.7.0",

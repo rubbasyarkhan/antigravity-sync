@@ -1,13 +1,50 @@
 /**
- * Dashboard & Project List Rendering Engine with Real-Time Search, Personal Toggles, Environment Verification & Progress Bar
+ * Dashboard & Project List Rendering Engine with Real-Time Search, Category Filters,
+ * Pagination, Visual Badges (Private/Public/Company/Personal), Personal Toggles & Progress Bar
  */
 let searchQuery = '';
+let activeFilter = 'all'; // 'all', 'private', 'public', 'company', 'personal'
+let currentPage = 1;
+const itemsPerPage = 6;
 
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('project-search-input');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value.trim().toLowerCase();
+      currentPage = 1;
+      renderProjects();
+    });
+  }
+
+  // Filter Pill Event Listeners
+  const filterPills = document.querySelectorAll('#repo-filter-bar .filter-pill');
+  filterPills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      filterPills.forEach((p) => p.classList.remove('active'));
+      pill.classList.add('active');
+      activeFilter = pill.dataset.filter || 'all';
+      currentPage = 1;
+      renderProjects();
+    });
+  });
+
+  // Pagination Button Handlers
+  const btnPrev = document.getElementById('btn-prev-page');
+  const btnNext = document.getElementById('btn-next-page');
+
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderProjects();
+      }
+    });
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      currentPage++;
       renderProjects();
     });
   }
@@ -31,44 +68,106 @@ document.addEventListener('DOMContentLoaded', () => {
 function renderProjects() {
   const companyContainer = document.getElementById('company-projects-list');
   const personalContainer = document.getElementById('personal-projects-list');
+  const paginationFooter = document.getElementById('pagination-footer');
 
   if (!state || !state.workspace) return;
 
   let assigned = state.workspace.assigned_projects || [];
   let personal = state.workspace.personal_repos || [];
 
-  // Filter projects based on real-time search query
+  // Tag type on objects for unified filtering & badge rendering
+  assigned = assigned.map((p) => ({ ...p, _type: 'company' }));
+  personal = personal.map((p) => ({ ...p, _type: 'personal' }));
+
+  // 1. Filter by Search Query
   if (searchQuery) {
     assigned = assigned.filter(
       (p) =>
         (p.name && p.name.toLowerCase().includes(searchQuery)) ||
         (p.description && p.description.toLowerCase().includes(searchQuery)) ||
-        (p.team && p.team.toLowerCase().includes(searchQuery))
+        (p.team && p.team.toLowerCase().includes(searchQuery)) ||
+        (p.language && p.language.toLowerCase().includes(searchQuery))
     );
 
     personal = personal.filter(
       (p) =>
         (p.name && p.name.toLowerCase().includes(searchQuery)) ||
-        (p.repo_url && p.repo_url.toLowerCase().includes(searchQuery))
+        (p.repo_url && p.repo_url.toLowerCase().includes(searchQuery)) ||
+        (p.language && p.language.toLowerCase().includes(searchQuery))
     );
   }
 
-  // 1. Render Company Assigned Projects (With Toggle Switches)
-  if (assigned.length === 0) {
+  // 2. Filter by Category / Visibility Pill
+  if (activeFilter === 'private') {
+    assigned = assigned.filter((p) => p.is_private);
+    personal = personal.filter((p) => p.is_private);
+  } else if (activeFilter === 'public') {
+    assigned = assigned.filter((p) => !p.is_private);
+    personal = personal.filter((p) => !p.is_private);
+  } else if (activeFilter === 'company') {
+    personal = [];
+  } else if (activeFilter === 'personal') {
+    assigned = [];
+  }
+
+  const totalAssignedCount = assigned.length;
+  const totalPersonalCount = personal.length;
+  const totalCombinedCount = totalAssignedCount + totalPersonalCount;
+
+  // 3. Apply Pagination across combined list or individual sections
+  const totalPages = Math.max(1, Math.ceil(totalCombinedCount / itemsPerPage));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  // Combine assigned & personal for unified pagination order
+  const allFiltered = [...assigned, ...personal];
+  const pageItems = allFiltered.slice(startIndex, endIndex);
+
+  const paginatedAssigned = pageItems.filter((p) => p._type === 'company');
+  const paginatedPersonal = pageItems.filter((p) => p._type === 'personal');
+
+  // Render Helper for Badges
+  function renderBadges(proj, type) {
+    const isPrivate = Boolean(proj.is_private);
+    const visBadge = isPrivate
+      ? '<span class="badge-vis badge-private">🔒 Private</span>'
+      : '<span class="badge-vis badge-public">🌐 Public</span>';
+
+    const typeBadge =
+      type === 'company'
+        ? `<span class="badge-vis badge-company">🏢 ${escapeHtml(proj.team || 'Company')}</span>`
+        : '<span class="badge-vis badge-personal">👤 Personal</span>';
+
+    const langBadge = proj.language
+      ? `<span class="badge-vis badge-lang">💻 ${escapeHtml(proj.language)}</span>`
+      : '';
+
+    return `${visBadge} ${typeBadge} ${langBadge}`;
+  }
+
+  // Render Company Projects Section
+  if (paginatedAssigned.length === 0) {
     companyContainer.innerHTML = `<div class="empty-state">${
-      searchQuery
-        ? `No company projects match "${escapeHtml(searchQuery)}".`
-        : `No company projects assigned to @${state.user ? state.user.github_login : ''} yet.`
+      totalAssignedCount === 0
+        ? searchQuery || activeFilter !== 'all'
+          ? 'No company projects match current filters.'
+          : `No company projects assigned to @${state.user ? state.user.github_login : ''} yet.`
+        : 'No company projects on this page.'
     }</div>`;
   } else {
-    companyContainer.innerHTML = assigned
+    companyContainer.innerHTML = paginatedAssigned
       .map((proj) => {
         const isEnabled = state.enabledSlugs ? state.enabledSlugs.has(proj.slug) : false;
         return `
         <div class="project-card">
           <div class="project-details">
-            <h4>${escapeHtml(proj.name)}</h4>
-            <p>${escapeHtml(proj.description || 'No description')} • <span class="team-tag">${escapeHtml(proj.team || 'General')}</span></p>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px">
+              <h4 style="margin:0">${escapeHtml(proj.name)}</h4>
+              ${renderBadges(proj, 'company')}
+            </div>
+            <p>${escapeHtml(proj.description || 'No description')}</p>
           </div>
           <label class="switch">
             <input type="checkbox" data-type="company" data-slug="${proj.slug}" ${isEnabled ? 'checked' : ''} onchange="handleToggleChange(this)">
@@ -80,23 +179,28 @@ function renderProjects() {
       .join('');
   }
 
-  // 2. Render Personal Projects (With Toggle Switches & Share Button)
-  if (personal.length === 0) {
+  // Render Personal Projects Section
+  if (paginatedPersonal.length === 0) {
     personalContainer.innerHTML = `<div class="empty-state">${
-      searchQuery
-        ? `No personal projects match "${escapeHtml(searchQuery)}".`
-        : 'No personal projects added.'
+      totalPersonalCount === 0
+        ? searchQuery || activeFilter !== 'all'
+          ? 'No personal projects match current filters.'
+          : 'No personal projects added.'
+        : 'No personal projects on this page.'
     }</div>`;
   } else {
-    personalContainer.innerHTML = personal
+    personalContainer.innerHTML = paginatedPersonal
       .map((proj) => {
         const slug = proj.slug || proj.name;
         const isEnabled = state.enabledPersonalSlugs ? state.enabledPersonalSlugs.has(slug) : false;
         return `
         <div class="project-card">
           <div class="project-details">
-            <h4>${escapeHtml(proj.name)}</h4>
-            <p>Personal Project • ${escapeHtml(proj.repo_url)}</p>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px">
+              <h4 style="margin:0">${escapeHtml(proj.name)}</h4>
+              ${renderBadges(proj, 'personal')}
+            </div>
+            <p>${escapeHtml(proj.repo_url)}</p>
           </div>
           <div style="display:flex; align-items:center; gap:12px">
             <button class="btn-secondary" onclick="openShareModal('${slug}', '${proj.repo_url}')">👥 Share</button>
@@ -110,6 +214,42 @@ function renderProjects() {
       })
       .join('');
   }
+
+  // 4. Update Pagination Footer UI Controls
+  if (paginationFooter) {
+    if (totalCombinedCount > 0) {
+      paginationFooter.classList.remove('hidden');
+      const startDisplay = totalCombinedCount === 0 ? 0 : startIndex + 1;
+      const endDisplay = Math.min(endIndex, totalCombinedCount);
+
+      const infoText = document.getElementById('pagination-info');
+      if (infoText) {
+        infoText.textContent = `Showing ${startDisplay}–${endDisplay} of ${totalCombinedCount} projects`;
+      }
+
+      const btnPrev = document.getElementById('btn-prev-page');
+      const btnNext = document.getElementById('btn-next-page');
+
+      if (btnPrev) btnPrev.disabled = currentPage === 1;
+      if (btnNext) btnNext.disabled = currentPage >= totalPages;
+
+      const pageNumbers = document.getElementById('page-numbers');
+      if (pageNumbers) {
+        let pagesHtml = '';
+        for (let p = 1; p <= totalPages; p++) {
+          pagesHtml += `<button class="page-number ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+        }
+        pageNumbers.innerHTML = pagesHtml;
+      }
+    } else {
+      paginationFooter.classList.add('hidden');
+    }
+  }
+}
+
+function goToPage(page) {
+  currentPage = page;
+  renderProjects();
 }
 
 async function handleToggleChange(checkbox) {

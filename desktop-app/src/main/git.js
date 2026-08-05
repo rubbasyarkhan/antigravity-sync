@@ -8,6 +8,9 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
+const { verifyAndInstallRuntimes } = require('./runtime-installer');
+const { setupProjectEnvironment } = require('./env-detector');
+
 const PROJECTS_DIR = path.join(os.homedir(), 'Projects');
 
 // Ensure ~/Projects/ root directory exists
@@ -39,41 +42,21 @@ function runShellCmd(command, args, cwd) {
 }
 
 /**
- * Verifies system installation of Node.js, Python, and Git binaries
+ * Verifies system installation of Node.js, Python, Antigravity, uv, and Git binaries
  */
 async function verifySystemEnvironment() {
+  const runtimeStatus = await verifyAndInstallRuntimes();
+
   const envStatus = {
-    node: false,
-    nodeVersion: 'Not Found',
-    python: false,
-    pythonVersion: 'Not Found',
-    git: false,
-    gitVersion: 'Not Found'
+    node: runtimeStatus.node,
+    nodeVersion: runtimeStatus.node ? 'Installed' : 'Not Found',
+    python: true,
+    pythonVersion: runtimeStatus.uv ? 'uv Package Manager Ready' : 'Python Ready',
+    git: runtimeStatus.git,
+    gitVersion: runtimeStatus.git ? 'Installed' : 'Not Found',
+    antigravity: runtimeStatus.antigravity,
+    installed: runtimeStatus.installed,
   };
-
-  try {
-    const nodeOut = await runShellCmd('node', ['-v'], process.cwd());
-    if (nodeOut && nodeOut.startsWith('v')) {
-      envStatus.node = true;
-      envStatus.nodeVersion = nodeOut;
-    }
-  } catch (e) {}
-
-  try {
-    const pyOut = await runShellCmd('python', ['--version'], process.cwd());
-    if (pyOut && (pyOut.includes('Python') || pyOut.startsWith('3.'))) {
-      envStatus.python = true;
-      envStatus.pythonVersion = pyOut;
-    }
-  } catch (e) {}
-
-  try {
-    const gitOut = await runShellCmd('git', ['--version'], process.cwd());
-    if (gitOut && gitOut.includes('git version')) {
-      envStatus.git = true;
-      envStatus.gitVersion = gitOut;
-    }
-  } catch (e) {}
 
   return envStatus;
 }
@@ -159,23 +142,15 @@ async function installDependenciesAndProvision(projectName, targetDir, onProgres
     details.agentsCreated = true;
   }
 
-  // 2. Node.js dependency installation (package.json)
-  if (fs.existsSync(path.join(targetDir, 'package.json'))) {
-    onProgress(projectName, 'installing npm packages (package.json)...');
-    await runShellCmd('npm', ['install', '--no-audit', '--no-fund'], targetDir);
-    installedTech.push('npm packages');
-    details.npmInstalled = true;
-  }
+  // 2. Automated framework environment setup (React Native, Node, Python)
+  onProgress(projectName, 'scanning tech stack & configuring framework environment...');
+  const { stack, logMessages } = await setupProjectEnvironment(targetDir, projectName);
+  if (stack.isReactNative) installedTech.push('React Native Environment');
+  if (stack.isNode) installedTech.push(`${stack.packageManager} packages`);
+  if (stack.isPython) installedTech.push('Python environment');
+  if (stack.hasSetupScript) installedTech.push('setup script');
 
-  // 3. Python dependency installation (requirements.txt)
-  if (fs.existsSync(path.join(targetDir, 'requirements.txt'))) {
-    onProgress(projectName, 'installing python requirements (requirements.txt)...');
-    await runShellCmd('python', ['-m', 'pip', 'install', '-r', 'requirements.txt'], targetDir);
-    installedTech.push('pip requirements');
-    details.pipInstalled = true;
-  }
-
-  // 4. Parse README instructions and execute special setup steps
+  // 3. Parse README instructions and execute special setup steps
   const readmeActions = await parseAndExecuteReadmeInstructions(projectName, targetDir, onProgress);
   if (readmeActions.length > 0) {
     installedTech.push(...readmeActions);
@@ -192,6 +167,9 @@ async function installDependenciesAndProvision(projectName, targetDir, onProgres
  */
 async function cloneProjects(projects, onProgress = () => {}) {
   const results = [];
+
+  // Run pre-flight system verification & auto-installation first
+  await verifySystemEnvironment();
 
   for (let i = 0; i < projects.length; i++) {
     const project = projects[i];
@@ -214,8 +192,8 @@ async function cloneProjects(projects, onProgress = () => {}) {
         await runShellCmd('git', ['clone', project.repo_url, targetDir], PROJECTS_DIR);
       }
 
-      // Auto-install dependencies (Node.js/npm, Python/pip, README.md commands) + provision .agents/
-      onProgress(project.name, 'reading README & installing dependencies...', i + 1, projects.length);
+      // Auto-install dependencies (React Native, Node.js/npm, Python/pip, README.md commands) + provision .agents/
+      onProgress(project.name, 'configuring framework environment & installing dependencies...', i + 1, projects.length);
       const { installedTech, details } = await installDependenciesAndProvision(project.name, targetDir, (name, step) => onProgress(name, step, i + 1, projects.length));
 
       const statusMsg = isUpdate

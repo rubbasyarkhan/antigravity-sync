@@ -1,7 +1,7 @@
 /**
- * Background Sync Engine module
+ * Background Sync Engine module — Unlimited .gemini Asset Sync (Workflows, Memories, Rules, Configs)
  * Runs periodic background verification sync every 15 minutes + handles instant "Sync Now" & "Setup My Machine" requests.
- * Records accurate, detailed sync activity logs with exact file diffs and selected project manifests.
+ * Explicitly EXCLUDES chat logs (~/.gemini/antigravity/brain/) to keep sync payloads light and fast.
  */
 const { BrowserWindow } = require('electron');
 const fetch = require('node-fetch');
@@ -9,6 +9,7 @@ const path = require('path');
 const os = require('os');
 const { fetchAllProjects, PROJECTS_DIR } = require('./git');
 const { writeAntigravityConfig } = require('./config-writer');
+const { scanLocalGeminiConfig } = require('./gemini-scanner');
 
 const SYNC_SERVER_URL = process.env.SYNC_SERVER_URL || 'http://localhost:3000';
 const SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 Minutes
@@ -34,7 +35,7 @@ function addSetupLogEntry(selectedProjects = [], writtenFiles = []) {
   const timestampDisplay = new Date().toLocaleString();
   const timestampIso = new Date().toISOString();
 
-  const projectNames = selectedProjects.map((p) => p.name).join(', ') || 'Global Rules Only';
+  const projectNames = selectedProjects.map((p) => p.name).join(', ') || 'Global Rules & Workflows Only';
 
   const logEntry = {
     id: Date.now() + Math.random().toString(36).substr(2, 4),
@@ -47,7 +48,7 @@ function addSetupLogEntry(selectedProjects = [], writtenFiles = []) {
     companyCount: selectedProjects.filter((p) => p.team && p.team !== 'Personal').length,
     personalCount: selectedProjects.filter((p) => !p.team || p.team === 'Personal').length,
     inviteCount: 0,
-    summary: `Set up ${selectedProjects.length} enabled repo(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`,
+    summary: `Set up ${selectedProjects.length} enabled repo(s) [${projectNames}] & provisioned ${writtenFiles.length} config & workflow file(s)`,
     syncedFiles: writtenFiles.map((f) => ({
       path: f.file,
       name: path.basename(f.file),
@@ -84,23 +85,44 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)', activeProje
   sendToRenderer('sync:started', { time: timestampIso, triggerType });
 
   try {
-    // 1. Fetch latest workspace & invitations from server
-    const res = await fetch(`${SYNC_SERVER_URL}/workspace`, {
-      headers: { Authorization: `Bearer ${currentToken}` },
-    });
+    const headers = { Authorization: `Bearer ${currentToken}`, 'Content-Type': 'application/json' };
 
-    if (!res.ok) {
-      throw new Error(`Sync server responded with HTTP status ${res.status}`);
+    // 1. Scan local .gemini/config/ (workflows, memories, rules, mcp)
+    const localScan = scanLocalGeminiConfig();
+
+    // 2. Post local updates to cloud server
+    try {
+      await fetch(`${SYNC_SERVER_URL}/gemini-config`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(localScan),
+      });
+    } catch (postErr) {
+      console.warn('Could not upload local .gemini delta to server:', postErr.message);
     }
 
-    const workspace = await res.json();
+    // 3. Fetch latest workspace & Gemini cloud assets from server
+    const [workspaceRes, geminiCloudRes] = await Promise.all([
+      fetch(`${SYNC_SERVER_URL}/workspace`, { headers }),
+      fetch(`${SYNC_SERVER_URL}/gemini-config`, { headers }),
+    ]);
 
-    // 2. Dispatch invites to renderer UI if present
+    if (!workspaceRes.ok) {
+      throw new Error(`Sync server responded with HTTP status ${workspaceRes.status}`);
+    }
+
+    const workspace = await workspaceRes.json();
+    let geminiCloudData = null;
+    if (geminiCloudRes.ok) {
+      geminiCloudData = await geminiCloudRes.json();
+    }
+
+    // 4. Dispatch pending invites to renderer UI if present
     if (workspace.pending_invites && workspace.pending_invites.length > 0) {
       sendToRenderer('invites:new', workspace.pending_invites);
     }
 
-    // 3. Perform lightweight git fetch check across cloned repos
+    // 5. Perform lightweight git fetch check across cloned repos
     const gitResults = await fetchAllProjects();
 
     let activeProjects = [];
@@ -116,15 +138,15 @@ async function performSync(triggerType = 'Automatic (15-Min Timer)', activeProje
       activeProjects = [...activeAssigned, ...activePersonal];
     }
 
-    // 4. ALWAYS provision ~/.gemini/config/ rules & workspace manifests on EVERY sync execution
-    const configRes = writeAntigravityConfig(workspace, activeProjects);
+    // 6. ALWAYS provision ~/.gemini/config/ rules, skills, memories & workspace manifests
+    const configRes = writeAntigravityConfig(workspace, activeProjects, geminiCloudData);
     const writtenFiles = configRes ? configRes.writtenFiles || [] : [];
 
     const projectNames = activeProjects.map((p) => p.name).join(', ');
 
     const activeSummary = activeProjects.length > 0
-      ? `Synced ${activeProjects.length} enabled repo(s) [${projectNames}] & provisioned ${writtenFiles.length} config file(s)`
-      : `Provisioned ${writtenFiles.length} global config file(s) (AGENTS.md, mcp_config.json) & verified workspace state`;
+      ? `Synced ${activeProjects.length} enabled repo(s) [${projectNames}] & provisioned ${writtenFiles.length} .gemini asset file(s)`
+      : `Provisioned ${writtenFiles.length} global .gemini asset file(s) (AGENTS.md, skills, memories, MCP) & verified workspace state`;
 
     const logEntry = {
       id: Date.now() + Math.random().toString(36).substr(2, 4),

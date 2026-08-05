@@ -82,7 +82,15 @@
         </div>
 
         <div class="search-container">
-          <input id="project-search-input" type="text" placeholder="Search projects by name, description, or team..." class="search-input" />
+          <input id="project-search-input" type="text" placeholder="Search projects by name, description, language, or team..." class="search-input" />
+        </div>
+
+        <div class="filter-bar" id="repo-filter-bar">
+          <button class="filter-pill active" data-filter="all">All Repositories</button>
+          <button class="filter-pill" data-filter="private">🔒 Private</button>
+          <button class="filter-pill" data-filter="public">🌐 Public</button>
+          <button class="filter-pill" data-filter="company">🏢 Company</button>
+          <button class="filter-pill" data-filter="personal">👤 Personal</button>
         </div>
 
         <section class="project-section">
@@ -99,6 +107,16 @@
           </div>
           <button id="btn-add-personal" class="btn-secondary" style="margin-top: 12px;">+ Add Personal Repository</button>
         </section>
+
+        <!-- Pagination Bar -->
+        <div id="pagination-footer" class="pagination-container hidden">
+          <div id="pagination-info" class="pagination-info">Showing 0 of 0 projects</div>
+          <div id="pagination-controls" class="pagination-controls">
+            <button id="btn-prev-page" class="pagination-btn">‹ Prev</button>
+            <div id="page-numbers" style="display:flex; gap:4px"></div>
+            <button id="btn-next-page" class="pagination-btn">Next ›</button>
+          </div>
+        </div>
       </div>
 
       <!-- Notifications Tab -->

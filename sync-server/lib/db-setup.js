@@ -79,6 +79,34 @@ async function setup() {
   `;
   console.log('  ✅ invites table ready');
 
+  // User Gemini Config table — stores personal memory, skills, rules, and MCP configs across devices
+  await sql`
+    CREATE TABLE IF NOT EXISTS user_gemini_config (
+      id              SERIAL PRIMARY KEY,
+      github_login    TEXT UNIQUE NOT NULL,
+      memories        JSONB DEFAULT '[]',
+      personal_skills JSONB DEFAULT '[]',
+      personal_rules  TEXT DEFAULT '',
+      mcp_config      JSONB DEFAULT '{}',
+      hooks_config    JSONB DEFAULT '{}',
+      updated_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+  `;
+  console.log('  ✅ user_gemini_config table ready');
+
+  // Team Gemini Config table — stores shared organization rules and workflow skills
+  await sql`
+    CREATE TABLE IF NOT EXISTS team_gemini_config (
+      id              SERIAL PRIMARY KEY,
+      team_slug       TEXT UNIQUE NOT NULL,
+      team_rules      TEXT DEFAULT '',
+      team_skills     JSONB DEFAULT '[]',
+      mcp_config      JSONB DEFAULT '{}',
+      updated_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+  `;
+  console.log('  ✅ team_gemini_config table ready');
+
   console.log('\n🎉 Database schema setup complete!');
 }
 

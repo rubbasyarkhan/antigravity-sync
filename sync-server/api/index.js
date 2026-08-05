@@ -11,6 +11,7 @@ const authCallbackRoute = require('./auth/callback');
 const workspaceRoute = require('./workspace');
 const assignmentsRoute = require('./assignments');
 const invitesRoute = require('./invites');
+const geminiConfigRoute = require('./gemini-config');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/auth/github/callback', authCallbackRoute);
 app.use('/workspace', workspaceRoute);
 app.use('/assignments', assignmentsRoute);
 app.use('/invites', invitesRoute);
+app.use('/gemini-config', geminiConfigRoute);
 
 // 404 Route Handler
 app.use((req, res) => {

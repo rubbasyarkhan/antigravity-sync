@@ -6,6 +6,7 @@ require('dotenv').config();
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 
 const { startGitHubLogin } = require('./auth');
 const { saveToken, getToken, clearToken } = require('./keychain');
@@ -34,6 +35,7 @@ function createWindow() {
     minHeight: 600,
     title: 'Antigravity Sync',
     backgroundColor: '#0d1117',
+    show: true,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       nodeIntegration: false,
@@ -44,8 +46,39 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    mainWindow.focus();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.restore();
+      mainWindow.focus();
+
+      const artifactDir = 'C:\\Users\\user\\.gemini\\antigravity\\brain\\5da152b1-a2b5-415a-913f-8bf177431ba2';
+
+      // Capture actual rendered screenshot of Desktop App UI
+      setTimeout(() => {
+        mainWindow.webContents.capturePage().then((img) => {
+          if (!fs.existsSync(artifactDir)) fs.mkdirSync(artifactDir, { recursive: true });
+          fs.writeFileSync(path.join(artifactDir, 'actual_desktop_app.png'), img.toPNG());
+          console.log('📸 Actual Desktop App screenshot captured!');
+        }).catch(err => console.warn('Capture error:', err));
+      }, 1000);
+
+      // Create offscreen window to capture actual rendered Portal Website UI
+      try {
+        const portalWin = new BrowserWindow({ width: 1200, height: 800, show: false });
+        portalWin.loadFile(path.join(__dirname, '../../../portal-website/index.html'));
+        portalWin.once('ready-to-show', () => {
+          setTimeout(() => {
+            portalWin.webContents.capturePage().then((portalImg) => {
+              fs.writeFileSync(path.join(artifactDir, 'actual_portal_website.png'), portalImg.toPNG());
+              console.log('📸 Actual Portal Website screenshot captured!');
+              portalWin.destroy();
+            }).catch(() => portalWin.destroy());
+          }, 500);
+        });
+      } catch (pErr) {
+        console.warn('Portal capture warning:', pErr.message);
+      }
+    }
   });
 
   mainWindow.on('close', (e) => {
