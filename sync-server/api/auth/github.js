@@ -9,6 +9,7 @@ const router = Router();
 
 router.get('/', (req, res) => {
   const clientId = process.env.GITHUB_CLIENT_ID;
+  const callbackUrl = process.env.GITHUB_CALLBACK_URL || 'https://antigravity-sync-three.vercel.app/auth/github/callback';
 
   // Check if real GitHub Client ID is provided
   if (!clientId || clientId === 'mock_client_id' || clientId.includes('your_')) {
@@ -32,7 +33,7 @@ router.get('/', (req, res) => {
         <div class="card">
           <h2>🔑 GitHub OAuth App Setup Required</h2>
           <p style="color: #94a3b8; font-size: 14px;">
-            To log in with your <strong>actual GitHub account</strong>, you need to register a free OAuth App on GitHub and add your <code>GITHUB_CLIENT_ID</code> and <code>GITHUB_CLIENT_SECRET</code> to your <code>sync-server/.env</code> file.
+            To log in with your <strong>actual GitHub account</strong>, add your <code>GITHUB_CLIENT_ID</code> and <code>GITHUB_CLIENT_SECRET</code> to Vercel Environment Variables.
           </p>
 
           <ol>
@@ -40,18 +41,19 @@ router.get('/', (req, res) => {
             <li>Click <strong>New OAuth App</strong> and enter:
               <div class="step-box">
                 <strong>Application Name:</strong> Antigravity Sync<br>
-                <strong>Homepage URL:</strong> http://localhost:3000<br>
-                <strong>Authorization callback URL:</strong> http://localhost:3000/auth/github/callback
+                <strong>Homepage URL:</strong> https://antigravity-sync-upkv.vercel.app<br>
+                <strong>Authorization callback URL:</strong> ${callbackUrl}
               </div>
             </li>
             <li>Copy your <strong>Client ID</strong> and generate a <strong>Client Secret</strong>.</li>
-            <li>Add them to <code>sync-server/.env</code>:
+            <li>Add them to Vercel Project Settings → Environment Variables:
               <div class="step-box">
                 GITHUB_CLIENT_ID=your_actual_client_id<br>
-                GITHUB_CLIENT_SECRET=your_actual_client_secret
+                GITHUB_CLIENT_SECRET=your_actual_client_secret<br>
+                GITHUB_CALLBACK_URL=${callbackUrl}
               </div>
             </li>
-            <li>Restart the server and click <strong>Sign in with GitHub</strong> again!</li>
+            <li>Redeploy Vercel and click <strong>Sign in with GitHub</strong> again!</li>
           </ol>
         </div>
       </body>
@@ -62,7 +64,7 @@ router.get('/', (req, res) => {
   // Redirect user to github.com to log in with their actual GitHub account
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: process.env.GITHUB_CALLBACK_URL || 'http://localhost:3000/auth/github/callback',
+    redirect_uri: callbackUrl,
     scope: 'repo read:user user:email read:org',
   });
 
