@@ -14,7 +14,10 @@
   <!-- Login Screen -->
   <div id="screen-login" class="screen active">
     <div class="login-card">
-      <h1>Antigravity Sync</h1>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        <h1 style="margin:0;">Antigravity Sync</h1>
+      </div>
       <p>Developer Machine Setup & Continuous Environment Synchronization</p>
       
       <button id="btn-login" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px 20px; font-size: 14px;">
@@ -35,21 +38,26 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
       <div class="sidebar-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
         <span>Antigravity Sync</span>
       </div>
 
       <nav class="sidebar-nav">
         <button class="nav-item active" data-tab="projects">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           My Projects
         </button>
         <button class="nav-item" data-tab="notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           Notifications
           <span id="invite-badge" class="badge hidden">0</span>
         </button>
         <button class="nav-item" data-tab="sync">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
           Sync Status
         </button>
         <button class="nav-item" data-tab="settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           Settings
         </button>
       </nav>
@@ -70,27 +78,60 @@
       <div id="tab-projects" class="tab-content active">
         <div class="tab-header">
           <div>
-            <h2>My Projects</h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Select projects to clone and configure on your computer.</p>
+            <h2>My Workspace Projects</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Select projects to clone and configure automatically on your machine.</p>
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
             <button id="btn-setup-machine-main" class="btn-setup-hero">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
               Set Up My Machine
             </button>
-            <button id="btn-sync-now" class="btn-secondary">Sync Now</button>
+            <button id="btn-sync-now" class="btn-secondary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              Sync Now
+            </button>
+          </div>
+        </div>
+
+        <!-- Layman Setup Guide Banner -->
+        <div class="guide-banner">
+          <div class="guide-step">
+            <span class="step-num">1</span>
+            <div><strong>Toggle Projects ON</strong><br><span style="font-size:12px; color:var(--text-muted)">Choose the repositories you want on your computer.</span></div>
+          </div>
+          <div class="guide-step">
+            <span class="step-num">2</span>
+            <div><strong>Click 'Set Up My Machine'</strong><br><span style="font-size:12px; color:var(--text-muted)">Antigravity installs runtimes, dependencies & rules.</span></div>
+          </div>
+          <div class="guide-step">
+            <span class="step-num">3</span>
+            <div><strong>Start Coding!</strong><br><span style="font-size:12px; color:var(--text-muted)">Open Antigravity IDE with configured workspace AI context.</span></div>
           </div>
         </div>
 
         <div class="search-container">
-          <input id="project-search-input" type="text" placeholder="Search projects by name, description, language, or team..." class="search-input" />
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input id="project-search-input" type="text" placeholder="Search projects by name, description, language, or team..." class="search-input" style="padding-left: 36px;" />
         </div>
 
         <div class="filter-bar" id="repo-filter-bar">
           <button class="filter-pill active" data-filter="all">All Repositories</button>
-          <button class="filter-pill" data-filter="private">🔒 Private</button>
-          <button class="filter-pill" data-filter="public">🌐 Public</button>
-          <button class="filter-pill" data-filter="company">🏢 Company</button>
-          <button class="filter-pill" data-filter="personal">👤 Personal</button>
+          <button class="filter-pill" data-filter="private">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Private
+          </button>
+          <button class="filter-pill" data-filter="public">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            Public
+          </button>
+          <button class="filter-pill" data-filter="company">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"></path></svg>
+            Company
+          </button>
+          <button class="filter-pill" data-filter="personal">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Personal
+          </button>
         </div>
 
         <section class="project-section">

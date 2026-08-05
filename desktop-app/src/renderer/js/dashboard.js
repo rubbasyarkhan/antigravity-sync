@@ -128,20 +128,20 @@ function renderProjects() {
   const paginatedAssigned = pageItems.filter((p) => p._type === 'company');
   const paginatedPersonal = pageItems.filter((p) => p._type === 'personal');
 
-  // Render Helper for Badges
+  // Render Helper for SVG Badges
   function renderBadges(proj, type) {
     const isPrivate = Boolean(proj.is_private);
     const visBadge = isPrivate
-      ? '<span class="badge-vis badge-private">🔒 Private</span>'
-      : '<span class="badge-vis badge-public">🌐 Public</span>';
+      ? '<span class="badge-vis badge-private"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Private</span>'
+      : '<span class="badge-vis badge-public"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> Public</span>';
 
     const typeBadge =
       type === 'company'
-        ? `<span class="badge-vis badge-company">🏢 ${escapeHtml(proj.team || 'Company')}</span>`
-        : '<span class="badge-vis badge-personal">👤 Personal</span>';
+        ? `<span class="badge-vis badge-company"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg> ${escapeHtml(proj.team || 'Company')}</span>`
+        : '<span class="badge-vis badge-personal"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Personal</span>';
 
     const langBadge = proj.language
-      ? `<span class="badge-vis badge-lang">💻 ${escapeHtml(proj.language)}</span>`
+      ? `<span class="badge-vis badge-lang"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg> ${escapeHtml(proj.language)}</span>`
       : '';
 
     return `${visBadge} ${typeBadge} ${langBadge}`;
@@ -203,7 +203,10 @@ function renderProjects() {
             <p>${escapeHtml(proj.repo_url)}</p>
           </div>
           <div style="display:flex; align-items:center; gap:12px">
-            <button class="btn-secondary" onclick="openShareModal('${slug}', '${proj.repo_url}')">👥 Share</button>
+            <button class="btn-secondary" onclick="openShareModal('${slug}', '${proj.repo_url}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Share
+            </button>
             <label class="switch">
               <input type="checkbox" data-type="personal" data-slug="${slug}" ${isEnabled ? 'checked' : ''} onchange="handleToggleChange(this)">
               <span class="slider"></span>
