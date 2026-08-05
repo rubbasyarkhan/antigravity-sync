@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "sync-server/api/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "portal-website/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/auth/(.*)",
+      "dest": "sync-server/api/index.js"
+    },
+    {
+      "src": "/workspace(.*)",
+      "dest": "sync-server/api/index.js"
+    },
+    {
+      "src": "/gemini-config(.*)",
+      "dest": "sync-server/api/index.js"
+    },
+    {
+      "src": "/invites(.*)",
+      "dest": "sync-server/api/index.js"
+    },
+    {
+      "src": "/assignments(.*)",
+      "dest": "sync-server/api/index.js"
+    },
+    {
+      "src": "/health",
+      "dest": "sync-server/api/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "portal-website/$1"
+    }
+  ]
+}
