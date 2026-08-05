@@ -1,0 +1,46 @@
+name: Build & Release Cross-Platform Binaries (Windows, macOS, Linux)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }} Binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Desktop App Dependencies
+        run: |
+          cd desktop-app
+          npm install
+
+      - name: Package Desktop App for ${{ matrix.os }}
+        run: |
+          cd desktop-app
+          npm run package
+
+      - name: Make Distribution Installers for ${{ matrix.os }}
+        run: |
+          cd desktop-app
+          npm run make
+
+      - name: Upload Binaries to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            desktop-app/out/make/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
